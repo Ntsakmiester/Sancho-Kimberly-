@@ -46,3 +46,23 @@ button:focus-visible,a:focus-visible{outline:3px solid var(--blue);outline-offse
 .ship{margin-top:32px;padding-top:20px;border-top:1px solid var(--line);color:var(--muted);font-size:.9rem;line-height:1.7}
 footer{border-top:1px solid var(--line);padding:32px 0;color:var(--muted);font-size:.85rem}
 @media(prefers-reduced-motion:reduce){.tile,.btn,.sizes button{transition:none}html{scroll-behavior:auto}}
+.ul{background:none;border:0;padding:0;color:var(--fg);text-decoration:underline;cursor:pointer;font:inherit}
+.lead{color:var(--muted);max-width:44ch;margin:-8px 0 24px}
+.cartgrid{align-items:start;gap:48px}
+.line{display:flex;gap:16px;align-items:center;padding:16px 0;border-bottom:1px solid var(--line)}
+.line img{width:72px;height:90px;object-fit:cover;border-radius:10px;background:var(--soft)}
+.grow{flex:1}
+.qty{display:flex;gap:12px;align-items:center;margin-top:8px}
+.qty button:not(.ul){width:32px;height:32px;border-radius:8px;border:1.5px solid var(--line);background:none;color:var(--fg);cursor:pointer;font:inherit}
+.sum{background:var(--soft);border-radius:14px;padding:24px}
+.sum.narrow{max-width:460px}
+.row{display:flex;justify-content:space-between;gap:16px;padding:6px 0}
+.row.tot{border-top:1px solid var(--line);margin-top:8px;padding-top:14px;font-weight:700;font-size:1.1rem}
+.center{text-align:center}
+.sum .btn{margin-top:16px}
+.err{color:#d93025;margin:12px 0 0}
+input,select,textarea{width:100%;font:inherit;color:var(--fg);background:none;border:0;border-bottom:1.5px solid var(--line);padding:12px 0;margin-bottom:12px;border-radius:0}
+select{appearance:none}
+input:focus,select:focus{outline:0;border-color:var(--fg)}
+::placeholder{color:var(--muted)}
+.btn:disabled{opacity:.5;cursor:default}

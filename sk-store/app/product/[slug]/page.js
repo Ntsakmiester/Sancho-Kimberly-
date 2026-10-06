@@ -5,5 +5,5 @@ export const dynamic = 'force-dynamic';
 export default async function ProductPage({ params }) {
   const p = await getProduct(params.slug);
   if (!p) notFound();
-  return <ProductView p={{ name: p.name, description: p.description, images: p.images, variants: p.variants, priceText: price(p.price_cents) }} />;
+  return <ProductView p={{ slug: p.slug, price_cents: p.price_cents, name: p.name, description: p.description, images: p.images, variants: p.variants, priceText: price(p.price_cents) }} />;
 }

@@ -1,5 +1,5 @@
 import pool from './db';
-export const price = (c) => 'R ' + Math.round(c / 100).toLocaleString('en-ZA');
+export { price } from './format';
 const base = `select p.id,p.slug,p.name,p.category,p.price_cents,p.description,
  coalesce((select json_agg(json_build_object('url',i.url,'bg',i.bg) order by i.position) from product_images i where i.product_id=p.id),'[]') images,
  coalesce((select json_agg(json_build_object('size',v.size,'qty',v.qty) order by v.id) from variants v where v.product_id=p.id),'[]') variants
