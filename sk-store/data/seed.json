@@ -1,0 +1,152 @@
+[
+ {
+  "slug": "foundation-tee",
+  "name": "Foundation Tee",
+  "category": "Tees",
+  "price_cents": 59900,
+  "description": "Oversized fit in 240 GSM premium cotton with a screen printed concrete fracture graphic.",
+  "sizes": [
+   "S",
+   "M",
+   "L",
+   "XL"
+  ],
+  "stock": 10,
+  "images": [
+   {
+    "url": "/products/foundation-1.webp",
+    "bg": "#8b8580"
+   },
+   {
+    "url": "/products/foundation-2.webp",
+    "bg": "#807b75"
+   }
+  ]
+ },
+ {
+  "slug": "street-club-tee",
+  "name": "Street Club Tee",
+  "category": "Tees",
+  "price_cents": 45000,
+  "description": "Oversized tee with a small chest logo on the front and a large printed back.",
+  "sizes": [
+   "S",
+   "M",
+   "L",
+   "XL"
+  ],
+  "stock": 10,
+  "images": [
+   {
+    "url": "/products/street-1.webp",
+    "bg": "#fefefe"
+   },
+   {
+    "url": "/products/street-2.webp",
+    "bg": "#fefefe"
+   }
+  ]
+ },
+ {
+  "slug": "hope-tee",
+  "name": "Hope Tee",
+  "category": "Tees",
+  "price_cents": 45000,
+  "description": "Oversized tee with a Kimberly varsity back print, doves and barbed wire detail.",
+  "sizes": [
+   "S",
+   "M",
+   "L",
+   "XL"
+  ],
+  "stock": 10,
+  "images": [
+   {
+    "url": "/products/hope-1.webp",
+    "bg": "#fefefe"
+   }
+  ]
+ },
+ {
+  "slug": "varsity-script-tee",
+  "name": "Varsity Script Tee",
+  "category": "Tees",
+  "price_cents": 45000,
+  "description": "Oversized tee with a distressed red varsity logo and script wordmark.",
+  "sizes": [
+   "S",
+   "M",
+   "L",
+   "XL"
+  ],
+  "stock": 10,
+  "images": [
+   {
+    "url": "/products/varsity-1.webp",
+    "bg": "#696866"
+   }
+  ]
+ },
+ {
+  "slug": "block-logo-beanie",
+  "name": "Block Logo Beanie",
+  "category": "Beanies",
+  "price_cents": 28000,
+  "description": "Ribbed knit beanie with a bold block logo on the cuff.",
+  "sizes": [
+   "One size"
+  ],
+  "stock": 25,
+  "images": [
+   {
+    "url": "/products/block-1.webp",
+    "bg": "#878582"
+   }
+  ]
+ },
+ {
+  "slug": "doodle-beanie",
+  "name": "Doodle Beanie",
+  "category": "Beanies",
+  "price_cents": 28000,
+  "description": "Knit beanie with hand-drawn doodle prints, in eight colourways. Tap a thumbnail to see each one.",
+  "sizes": [
+   "One size"
+  ],
+  "stock": 25,
+  "images": [
+   {
+    "url": "/products/doodle-1.webp",
+    "bg": "#fefefe"
+   },
+   {
+    "url": "/products/doodle-2.webp",
+    "bg": "#fefefe"
+   },
+   {
+    "url": "/products/doodle-3.webp",
+    "bg": "#fefefe"
+   },
+   {
+    "url": "/products/doodle-4.webp",
+    "bg": "#fefefe"
+   },
+   {
+    "url": "/products/doodle-5.webp",
+    "bg": "#fefefe"
+   },
+   {
+    "url": "/products/doodle-6.webp",
+    "bg": "#fefefe"
+   },
+   {
+    "url": "/products/doodle-7.webp",
+    "bg": "#fefefe"
+   },
+   {
+    "url": "/products/doodle-8.webp",
+    "bg": "#fefefe"
+   }
+  ]
+ }
+]
