@@ -1,10 +1,14 @@
 import crypto from 'crypto';
 import pool from '../../../lib/db';
 import { shippingFor, PROVINCES } from '../../../lib/config';
+import { storefrontGate } from '../../../lib/gate';
 export const dynamic = 'force-dynamic';
 class UserError extends Error {}
 const fail = (m, s = 400) => Response.json({ error: m }, { status: s });
 export async function POST(req) {
+  // Owner service control: a suspended storefront cannot take orders (server-side, admins cannot override).
+  const gateMsg = await storefrontGate();
+  if (gateMsg) return fail(gateMsg, 503);
   let b;
   try { b = await req.json(); } catch { return fail('Invalid request.'); }
   const c = b.customer || {};

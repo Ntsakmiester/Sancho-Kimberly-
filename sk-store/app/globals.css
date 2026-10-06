@@ -66,3 +66,20 @@ select{appearance:none}
 input:focus,select:focus{outline:0;border-color:var(--fg)}
 ::placeholder{color:var(--muted)}
 .btn:disabled{opacity:.5;cursor:default}
+
+/* Keep owner data tables inside the viewport without hiding any columns. */
+.owner-panel{min-width:0}
+.owner-panel .owner-table-scroll{max-width:100%;overflow-x:auto;overscroll-behavior-x:contain;border:1px solid var(--line);border-radius:10px;margin:16px 0;-webkit-overflow-scrolling:touch}
+.owner-panel .owner-table-scroll:focus-visible{outline:3px solid var(--blue);outline-offset:3px}
+.owner-panel .owner-table-scroll table{min-width:800px}
+.owner-panel .owner-table-scroll th,.owner-panel .owner-table-scroll td{padding:12px;text-align:left;vertical-align:top}
+.owner-panel .owner-table-scroll th{background:var(--soft);font-weight:600;white-space:nowrap}
+.owner-panel .owner-table-scroll tr{border-color:var(--line)!important}
+.owner-panel .owner-table-scroll td{overflow-wrap:normal}
+.owner-panel input,.owner-panel select{min-width:0}
+.owner-panel select{background-color:var(--bg)}
+@media(max-width:720px){.owner-panel .owner-table-scroll table{font-size:.9rem}}
+
+@media(max-width:720px){.owner-table-scroll::before{content:"Swipe sideways to see all columns";display:block;position:sticky;left:0;width:100%;padding:8px 12px;color:var(--muted);background:var(--soft);font-size:.8rem}}
+/* Leave breathing room between the wordmark and navigation on narrow phones. */
+@media(max-width:360px){header .wrap{gap:16px}header .logo{min-width:0;flex:1}header .logo img{max-width:100%;height:auto;max-height:15px}header nav{flex-shrink:0;gap:16px}}
