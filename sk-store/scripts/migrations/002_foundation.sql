@@ -196,7 +196,7 @@ create index if not exists system_events_created_idx on system_events(created_at
 create index if not exists sessions_user_idx on sessions(user_id);
 create index if not exists login_attempts_created_idx on login_attempts(created_at desc);
 insert into settings(key,value) values
- ('store_name','Sancho Kimberly'),('business_email','hello@sanchokimberly.co.za'),('business_phone',''),('business_address',''),('currency','ZAR'),
+ ('store_name','Sancho Kimberly'),('business_email',''),('business_phone',''),('business_address',''),('currency','ZAR'),
  ('vat_rate','15'),('vat_registered','false'),('prices_include_vat','true'),('order_prefix','SK'),('store_description','Streetwear from the kasi, delivered nationwide.'),
  ('social_tiktok','https://www.tiktok.com/@sancho.kimberlyco'),('gateway_fee_pct','2.9'),('gateway_fee_fixed_cents','100'),('vat_number','')
  on conflict do nothing;

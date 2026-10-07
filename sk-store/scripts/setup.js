@@ -57,7 +57,6 @@ function hashPassword(pw) {
       ip text, result text default 'ok', created_at timestamptz default now());
     create table if not exists settings(key text primary key, value text);
     insert into service_state(id) values(true) on conflict do nothing;
-    insert into settings(key,value) values('support_email','hello@sanchokimberly.co.za') on conflict do nothing;
   `);
   await pool.query('create table if not exists schema_migrations(name text primary key, applied_at timestamptz default now())');
   const first = !(await pool.query("select 1 from schema_migrations where name='002_foundation.sql'")).rowCount;
@@ -78,6 +77,9 @@ function hashPassword(pw) {
     }
     console.log('Seeded', seed.length, 'products');
   }
+  // Idempotent: file every product under a category (also covers starter products seeded after the migration ran).
+  await pool.query("insert into categories(slug,name,position) select lower(regexp_replace(category,'[^a-zA-Z0-9]+','-','g')), category, row_number() over (order by category) from (select distinct category from products) c where not exists (select 1 from categories k where k.name=c.category) on conflict do nothing");
+  await pool.query('update products p set category_id=c.id from categories c where c.name=p.category and p.category_id is null');
   // Owner bootstrap: the owner account is created ONLY from environment variables,
   // once, when no owner exists. No credentials are ever hard-coded or committed.
   const owners = await pool.query("select count(*)::int c from users where role='owner'");

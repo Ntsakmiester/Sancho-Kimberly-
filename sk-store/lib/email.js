@@ -5,24 +5,27 @@
 //   EMAIL_API_KEY   provider API key
 //   APP_BASE_URL    public site URL used in links, e.g. https://shop.example.co.za
 // In production with no provider configured, sending FAILS CLOSED (no link is logged or sent).
+import { storeName } from './store';
+const esc = (t) => String(t).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const ROLE_LABEL = { customer: 'customer', admin: 'administrator', owner: 'owner' };
-export function resetEmailHtml({ name, role, url, minutes, invite = false }) {
+export function resetEmailHtml({ store, name, role, url, minutes, invite = false }) {
   const who = ROLE_LABEL[role] || 'account';
   return `<div style="font-family:Arial,sans-serif;max-width:520px;margin:auto;color:#111">
-  <h2 style="margin-bottom:4px">Sancho Kimberly</h2>
-  <p>Hi${name ? ' ' + name : ''},</p>
+  <h2 style="margin-bottom:4px">${esc(store)}</h2>
+  <p>Hi${name ? ' ' + esc(name) : ''},</p>
   <p>${invite ? `An ${who} account has been created for you. Use the button below to set your password.` : `We received a request to reset the password for your ${who} account.`}</p>
   <p style="text-align:center;margin:28px 0">
     <a href="${url}" style="background:#111;color:#fff;padding:12px 24px;text-decoration:none;border-radius:6px">${invite ? 'Set your password' : 'Reset your password'}</a>
   </p>
   <p>This link expires in ${minutes} minutes and can only be used once.</p>
   <p>If you did not expect this email, you can ignore it - nothing will change. Never share this link with anyone.</p>
-  <p style="color:#666;font-size:13px">Need help? Reply to this email and the Sancho Kimberly team will assist you.</p>
+  <p style="color:#666;font-size:13px">Need help? Reply to this email and the ${esc(store)} team will assist you.</p>
 </div>`;
 }
 export async function sendPasswordResetEmail({ to, name, role, url, minutes = 30, invite = false }) {
-  const subject = invite ? 'Your Sancho Kimberly account' : 'Reset your Sancho Kimberly password';
-  const html = resetEmailHtml({ name, role, url, minutes, invite });
+  const store = await storeName();
+  const subject = invite ? `Your ${store} account` : `Reset your ${store} password`;
+  const html = resetEmailHtml({ store, name, role, url, minutes, invite });
   const explicit = (process.env.EMAIL_PROVIDER || '').toLowerCase();
   const provider = explicit || (process.env.NODE_ENV === 'production' ? '' : 'console');
   if (provider === 'resend') {
@@ -42,10 +45,9 @@ export async function sendPasswordResetEmail({ to, name, role, url, minutes = 30
   throw new Error('Email provider is not configured (set EMAIL_PROVIDER, EMAIL_API_KEY, EMAIL_FROM)');
 }
 
-const esc = (t) => String(t).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 // General transactional email (order, payment, shipping, refund, alerts). Throws on failure: callers (lib/notify.js) catch it so email can never break an order.
 export async function sendEmail({ to, subject, text }) {
-  const html = `<div style="font-family:Arial,sans-serif;max-width:520px;margin:auto;color:#111"><h2 style="margin-bottom:4px">Sancho Kimberly</h2>${String(text).split('\n').map((l) => `<p>${esc(l)}</p>`).join('')}</div>`;
+  const html = `<div style="font-family:Arial,sans-serif;max-width:520px;margin:auto;color:#111"><h2 style="margin-bottom:4px">${esc(await storeName())}</h2>${String(text).split('\n').map((l) => `<p>${esc(l)}</p>`).join('')}</div>`;
   const explicit = (process.env.EMAIL_PROVIDER || '').toLowerCase();
   const provider = explicit || (process.env.NODE_ENV === 'production' ? '' : 'console');
   if (provider === 'resend') {

@@ -18,3 +18,8 @@ The owner can set the store to ACTIVE, MAINTENANCE, SUSPENDED or CANCELLED and s
 
 ## Known limits
 See the report delivered with this build: PayFast untested against real PayFast; manual PayFast refunds; no image resizing; no PDF reports; no 2FA; no stock reservation at checkout; DB-based rate limiting.
+
+## Patch notes (category + branding fixes)
+- Fresh installs now file the starter products under categories after seeding (previously the category list was empty on a brand-new database). Existing databases are unaffected.
+- The store name in emails now comes from Owner > Settings (`store_name`), then the optional `STORE_NAME` variable, instead of being written in code.
+- No invented business email addresses are seeded; set the support and business email in Owner > Settings.
