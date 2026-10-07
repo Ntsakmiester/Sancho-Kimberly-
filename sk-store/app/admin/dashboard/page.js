@@ -1,20 +1,25 @@
-import pool from '../../../lib/db';
-import { requirePageRole } from '../../../lib/pageguard';
-import { price } from '../../../lib/format';
+import Link from 'next/link';
+import { pagePerm } from '../../../lib/adminpage';
+import { dashboardStats } from '../../../lib/finance';
+import { money } from '../../../lib/format';
+import { Stats, Stat, Flash } from '../../../components/ui';
 export const dynamic = 'force-dynamic';
-export const metadata = { title: 'Admin | Sancho Kimberly' };
-export default async function AdminDashboard() {
-  const u = await requirePageRole(['admin', 'staff'], '/admin/login');
-  const r = await pool.query('select ref,status,name,total_cents,created_at from orders order by id desc limit 50');
+export default async function AdminHome({ searchParams }) {
+  const { perms } = await pagePerm(null);
+  const s = await dashboardStats();
+  const fin = perms.has('finance.view');
   return (
-    <section className="wrap shop">
-      <h2>Administrator dashboard</h2>
-      <p className="low">Signed in as {u.email} ({u.role})</p>
-      <form method="post" action="/api/auth/logout"><button className="btn">Log out</button></form>
-      <h3 style={{ marginTop: 20 }}>Recent orders</h3>
-      <table style={{ width: '100%', borderCollapse: 'collapse' }}><thead><tr style={{ textAlign: 'left' }}><th>Ref</th><th>Status</th><th>Customer</th><th>Total</th><th>Placed</th></tr></thead>
-        <tbody>{r.rows.map((o) => <tr key={o.ref} style={{ borderTop: '1px solid #eee' }}><td>{o.ref}</td><td>{o.status}</td><td>{o.name}</td><td>{price(o.total_cents)}</td><td>{new Date(o.created_at).toLocaleString('en-ZA')}</td></tr>)}</tbody></table>
-      <p className="low" style={{ marginTop: 16 }}>Owner controls (service status, licence, administrator management) are not available to administrators.</p>
-    </section>
+    <>
+      <Flash sp={searchParams} />
+      <h3>Today</h3>
+      <p className="low">All figures come from the database. Revenue counts verified payments only.</p>
+      <Stats>
+        {fin && <><Stat label="Today's revenue" value={money(s.today)} /><Stat label="Last 7 days" value={money(s.week)} /><Stat label="This month" value={money(s.month)} /></>}
+        <Stat label="Total orders" value={s.orders} /><Stat label="Pending orders" value={s.pending} /><Stat label="Paid orders" value={s.paid} />
+        <Stat label="Customers" value={s.customers} /><Stat label="Products" value={s.products} />
+        <Stat label="Low stock" value={s.low} /><Stat label="Out of stock" value={s.out} /><Stat label="Failed payments" value={s.failed} /><Stat label="Open refunds" value={s.refunds} />
+      </Stats>
+      {s.low + s.out > 0 && perms.has('inventory.view') && <p><Link href="/admin/dashboard/inventory?filter=low">Review low and out-of-stock items</Link></p>}
+    </>
   );
 }

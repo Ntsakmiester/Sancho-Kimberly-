@@ -59,6 +59,15 @@ function hashPassword(pw) {
     insert into service_state(id) values(true) on conflict do nothing;
     insert into settings(key,value) values('support_email','hello@sanchokimberly.co.za') on conflict do nothing;
   `);
+  await pool.query('create table if not exists schema_migrations(name text primary key, applied_at timestamptz default now())');
+  const first = !(await pool.query("select 1 from schema_migrations where name='002_foundation.sql'")).rowCount;
+  const dir = require('node:path').join(__dirname, 'migrations');
+  for (const f of require('node:fs').readdirSync(dir).filter((x) => x.endsWith('.sql')).sort()) {
+    if ((await pool.query('select 1 from schema_migrations where name=$1', [f])).rowCount) continue;
+    const c = await pool.connect();
+    try { await c.query('begin'); await c.query(require('node:fs').readFileSync(require('node:path').join(dir, f), 'utf8')); await c.query('insert into schema_migrations(name) values($1)', [f]); await c.query('commit'); console.log('Applied migration', f); }
+    catch (e) { await c.query('rollback').catch(() => {}); throw e; } finally { c.release(); }
+  }
   const { rows } = await pool.query('select count(*)::int c from products');
   if (!rows[0].c) {
     for (const p of seed) {

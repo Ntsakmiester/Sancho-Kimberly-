@@ -1,7 +1,9 @@
 import pool from '../../../../lib/db';
+import { PERMS } from '../../../../lib/perms';
 export const dynamic = 'force-dynamic';
 const btn = { padding: '4px 10px' };
 export default async function Admins({ searchParams }) {
+  const gr = (await pool.query('select user_id,permission from user_permissions')).rows;
   const r = await pool.query("select id,email,name,role,active,created_at from users where role in ('admin','staff') order by id");
   return (<>
     <h3>Administrators &amp; staff</h3>
@@ -21,6 +23,13 @@ export default async function Admins({ searchParams }) {
           <form method="post" action="/api/owner/admins"><input type="hidden" name="action" value="reset" /><input type="hidden" name="id" value={a.id} /><button style={btn}>Reset access</button></form>
           <form method="post" action="/api/owner/admins"><input type="hidden" name="action" value="remove" /><input type="hidden" name="id" value={a.id} /><button style={btn}>Remove</button></form>
         </td></tr>)}</tbody></table></div>
+    <h3 style={{ marginTop: 24 }}>Staff permissions</h3>
+    {searchParams.saved && <p style={{ color: '#146c2e' }}>Saved.</p>}
+    <p className="low">Staff can only do what you tick here. Administrators have full store access except owner controls.</p>
+    {r.rows.filter((a) => a.role === 'staff').map((a) => <details key={a.id} style={{ marginBottom: 8 }}><summary>{a.name || a.email}</summary>
+      <form method="post" action="/api/owner/staff"><input type="hidden" name="id" value={a.id} />
+        {PERMS.map((p) => <label key={p} style={{ display: 'inline-block', marginRight: 12 }}><input type="checkbox" name="permissions" value={p} defaultChecked={gr.some((x) => x.user_id === a.id && x.permission === p)} /> {p}</label>)}
+        <div><button className="btn">Save permissions</button></div></form></details>)}
     <h3 style={{ marginTop: 24 }}>Create an account</h3>
     <form method="post" action="/api/owner/admins" style={{ display: 'grid', gap: 10, maxWidth: 420 }}>
       <input type="hidden" name="action" value="create" />

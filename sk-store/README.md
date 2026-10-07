@@ -12,3 +12,6 @@ The owner can set the storefront to ACTIVE, PAYMENT_DUE, SUSPENDED or MAINTENANC
 
 ## Tests
 `tests/e2e.sh` needs the app running on $BASE with EMAIL_PROVIDER=console and its log in /tmp/next.log, plus $PSQL, $OWNER_EMAIL and $OWNER_PASSWORD set. It resets its own test accounts, so it can be re-run.
+
+## Stage 2 (commerce upgrade)
+See `docs/OPERATIONS.md`, `.env.example` and `scripts/migrations/002_foundation.sql`. Admin dashboard: `/admin/dashboard`. Owner panel: `/owner/dashboard`. Customer account: `/account`.

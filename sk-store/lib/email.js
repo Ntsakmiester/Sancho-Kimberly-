@@ -41,3 +41,19 @@ export async function sendPasswordResetEmail({ to, name, role, url, minutes = 30
   }
   throw new Error('Email provider is not configured (set EMAIL_PROVIDER, EMAIL_API_KEY, EMAIL_FROM)');
 }
+
+const esc = (t) => String(t).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+// General transactional email (order, payment, shipping, refund, alerts). Throws on failure: callers (lib/notify.js) catch it so email can never break an order.
+export async function sendEmail({ to, subject, text }) {
+  const html = `<div style="font-family:Arial,sans-serif;max-width:520px;margin:auto;color:#111"><h2 style="margin-bottom:4px">Sancho Kimberly</h2>${String(text).split('\n').map((l) => `<p>${esc(l)}</p>`).join('')}</div>`;
+  const explicit = (process.env.EMAIL_PROVIDER || '').toLowerCase();
+  const provider = explicit || (process.env.NODE_ENV === 'production' ? '' : 'console');
+  if (provider === 'resend') {
+    if (!process.env.EMAIL_API_KEY || !process.env.EMAIL_FROM) throw new Error('EMAIL_API_KEY and EMAIL_FROM must be set for Resend');
+    const res = await fetch('https://api.resend.com/emails', { method: 'POST', headers: { Authorization: `Bearer ${process.env.EMAIL_API_KEY}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ from: process.env.EMAIL_FROM, to: [to], subject, html }) });
+    if (!res.ok) throw new Error('Email provider rejected the message: ' + res.status);
+    return { provider, status: 'SENT' };
+  }
+  if (provider === 'console') { console.log(`[email:console] to=${to} subject="${subject}"`); return { provider, status: 'LOGGED' }; }
+  throw new Error('Email provider is not configured');
+}

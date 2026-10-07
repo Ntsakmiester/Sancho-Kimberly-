@@ -141,7 +141,7 @@ check "login lockout after repeated failures" "$LASTC" "429"
 echo "=== 8. Storefront still works (no Stage 1 regressions) ==="
 check "home page 200" "$(code "$BASE/")" "200"
 check "shop page 200" "$(code "$BASE/shop")" "200"
-check "place order while ACTIVE" "$(code -X POST "$BASE/api/orders" -H 'Content-Type: application/json' -d '{"customer":{"name":"T","email":"t@t.co","phone":"1","address":"1","suburb":"s","city":"c","province":"Gauteng","postal":"1"},"items":[{"slug":"varsity-script-tee","size":"M","qty":1}]}')" "200"
+check "place order while ACTIVE" "$(code -X POST "$BASE/api/orders" -H 'Content-Type: application/json' -d '{"customer":{"name":"T","email":"t@t.co","phone":"0821234567","address":"1","suburb":"s","city":"c","province":"Gauteng","postal":"2196"},"items":[{"slug":"varsity-script-tee","size":"M","qty":1}]}')" "200"
 
 echo
 echo "RESULT: $PASS passed, $FAIL failed"
