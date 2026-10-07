@@ -72,11 +72,12 @@ function hashPassword(pw) {
     for (const p of seed) {
       const r = await pool.query('insert into products(slug,name,category,price_cents,description) values($1,$2,$3,$4,$5) returning id', [p.slug, p.name, p.category, p.price_cents, p.description]);
       const id = r.rows[0].id;
-      for (let i = 0; i < p.images.length; i++) await pool.query('insert into product_images(product_id,url,bg,position) values($1,$2,$3,$4)', [id, p.images[i].url, p.images[i].bg, i]);
+      for (let i = 0; i < p.images.length; i++) await pool.query('insert into product_images(product_id,url,bg,position,alt) values($1,$2,$3,$4,$5)', [id, p.images[i].url, p.images[i].bg, i, p.images[i].alt || p.name]);
       for (const s of p.sizes) await pool.query('insert into variants(product_id,size,qty) values($1,$2,$3)', [id, s, p.stock]);
     }
     console.log('Seeded', seed.length, 'products');
   }
+  if (await require('./beanie-catalogue').applyBeanieCatalogue(pool)) console.log('Added named beanie catalogue');
   // Idempotent: file every product under a category (also covers starter products seeded after the migration ran).
   await pool.query("insert into categories(slug,name,position) select lower(regexp_replace(category,'[^a-zA-Z0-9]+','-','g')), category, row_number() over (order by category) from (select distinct category from products) c where not exists (select 1 from categories k where k.name=c.category) on conflict do nothing");
   await pool.query('update products p set category_id=c.id from categories c where c.name=p.category and p.category_id is null');

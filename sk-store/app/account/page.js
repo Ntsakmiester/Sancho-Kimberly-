@@ -2,6 +2,7 @@ import Link from 'next/link';
 import pool from '../../lib/db';
 import { requirePageRole } from '../../lib/pageguard';
 import { money } from '../../lib/format';
+import { unreadCount } from '../../lib/messages';
 import { PROVINCES } from '../../lib/config';
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'My account | Sancho Kimberly', robots: { index: false, follow: false } };
@@ -9,7 +10,7 @@ export default async function Account({ searchParams: sp }) {
   const u = await requirePageRole('customer', '/login');
   const orders = (await pool.query('select ref,status,payment_status,total_cents,created_at from orders where user_id=$1 order by id desc limit 50', [u.id])).rows;
   const addrs = (await pool.query('select * from addresses where user_id=$1 order by id', [u.id])).rows;
-  const notes = (await pool.query('select subject,body,created_at,read_at from notifications where user_id=$1 order by id desc limit 15', [u.id])).rows;
+  const unread = await unreadCount(u.id);
   const prof = (await pool.query('select name,phone from users where id=$1', [u.id])).rows[0] || {};
   return (
     <section className="wrap shop">
@@ -26,9 +27,8 @@ export default async function Account({ searchParams: sp }) {
       <form method="post" action="/api/account/address" style={{ display: 'grid', gap: 8, maxWidth: 380 }}><input type="hidden" name="action" value="add" />
         <input name="address" placeholder="Street address" required aria-label="Street address" /><input name="suburb" placeholder="Suburb" aria-label="Suburb" /><input name="city" placeholder="City" required aria-label="City" />
         <select name="province" aria-label="Province" required>{PROVINCES.map((p) => <option key={p}>{p}</option>)}</select><input name="postal" placeholder="Postal code" inputMode="numeric" required aria-label="Postal code" /><input name="phone" placeholder="Phone" aria-label="Phone" /><button className="btn">Add address</button></form>
-      <h3 style={{ marginTop: 20 }}>Notifications</h3>
-      {notes.length ? notes.map((n, i) => <p key={i}>{n.read_at ? n.subject : <b>{n.subject}</b>} <span className="low">{new Date(n.created_at).toLocaleDateString('en-ZA')}</span></p>) : <p className="low">None.</p>}
-      {notes.some((n) => !n.read_at) && <form method="post" action="/api/account/notifications"><button className="btn">Mark all read</button></form>}
+      <h3 style={{ marginTop: 20 }}>Messages &amp; notifications</h3>
+      <p><Link href="/account/messages">Open messages{unread > 0 ? <span className="badge">{unread}</span> : null}</Link> <span className="low">{unread > 0 ? `${unread} unread` : 'No unread messages'}</span></p>
       <form method="post" action="/api/auth/logout" style={{ marginTop: 20 }}><button className="btn">Log out</button></form>
     </section>
   );

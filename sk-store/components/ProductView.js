@@ -1,11 +1,11 @@
 'use client';
 import { useState } from 'react';
+import ProductGallery from './ProductGallery';
 import Link from 'next/link';
 import { price } from '../lib/format';
 import { useCart } from './CartProvider';
 export default function ProductView({ p }) {
   const cart = useCart();
-  const [i, setI] = useState(0);
   const [useVariantImage, setUseVariantImage] = useState(true);
   const colours = [...new Set(p.variants.map(x => x.colour || ''))];
   const hasColours = colours.some(Boolean);
@@ -13,14 +13,12 @@ export default function ProductView({ p }) {
   const [sel, setSel] = useState(p.variants.length === 1 ? 0 : null);
   const [msg, setMsg] = useState('');
   const [added, setAdded] = useState(false);
-  const im = p.images[i] || {};
   const v = sel != null ? p.variants[sel] : null;
   const size = v ? v.size : null;
   const chooseVariant = (k) => { setUseVariantImage(true); setSel(k); setMsg(''); setAdded(false); };
-  const displayImage = (useVariantImage && v?.image_url) || im.url;
   const onAdd = () => {
     if (!size || v.qty <= 0) { setMsg('Choose an available size first.'); setAdded(false); return; }
-    cart.add({ slug: p.slug, name: p.name, size, colour: v.colour || '', price_cents: v.price_cents != null ? v.price_cents : p.price_cents, image: displayImage });
+    cart.add({ slug: p.slug, name: p.name, size, colour: v.colour || '', price_cents: v.price_cents != null ? v.price_cents : p.price_cents, image: v?.image_url || p.images[0]?.url });
     setMsg('Added to your cart.'); setAdded(true);
   };
   return (
@@ -28,14 +26,7 @@ export default function ProductView({ p }) {
       <Link className="back" href="/shop">&larr; Shop</Link>
       <div className="two">
         <div>
-          <div className="tile" style={{ background: im.bg }}><img src={displayImage} alt={im.alt || p.name} /></div>
-          {p.images.length > 1 && (
-            <div className="thumbs">
-              {p.images.map((x, j) => (
-                <button key={j} className={j === i ? 'sel' : ''} onClick={() => { setI(j); setUseVariantImage(false); }} aria-pressed={j === i} aria-label={`View ${j + 1}`}><img src={x.url} alt="" /></button>
-              ))}
-            </div>
-          )}
+          <ProductGallery images={p.images} name={p.name} overrideImage={useVariantImage ? v?.image_url : null} onNavigate={() => setUseVariantImage(false)} />
         </div>
         <div>
           <h1 className="h2">{p.name}</h1>
