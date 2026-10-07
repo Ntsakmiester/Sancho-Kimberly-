@@ -39,19 +39,19 @@ export default async function EditProduct({ params, searchParams: sp }) {
       <h3 style={{ marginTop: 24 }}>Sizes, colours and stock</h3>
       <div style={{ overflowX: 'auto' }}>
         {vars.map((v) => (
-          <form key={v.id} method="post" action="/api/admin/products" style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center', marginBottom: 8 }}>
+          <form key={v.id} method="post" action="/api/admin/products" className="variant-editor">
             <input type="hidden" name="action" value="variant_save" /><input type="hidden" name="id" value={id} /><input type="hidden" name="variant_id" value={v.id} />
             <input name="size" defaultValue={v.size} size={5} aria-label="Size" /><input name="colour" defaultValue={v.colour} size={8} placeholder="Colour" aria-label="Colour" />
             <input name="sku" defaultValue={v.sku || ''} size={14} placeholder="SKU" aria-label="SKU" /><input name="price" defaultValue={v.price_cents != null ? rands(v.price_cents) : ''} size={7} placeholder="Own price" aria-label="Variant price" />
-            <input name="qty" defaultValue={v.qty} size={4} inputMode="numeric" aria-label="Stock" /><label><input type="checkbox" name="active" defaultChecked={v.active} /> Available</label>
+            <select name="image_url" defaultValue={v.image_url || ''} aria-label="Variant image"><option value="">Use product gallery</option>{imgs.map((im,j) => <option key={im.id} value={im.url}>Product image {j+1}</option>)}{v.image_url && !imgs.some(im => im.url === v.image_url) && <option value={v.image_url}>Current variant image</option>}</select><input name="qty" defaultValue={v.qty} size={4} inputMode="numeric" aria-label="Stock" /><label><input type="checkbox" name="active" defaultChecked={v.active} /> Available</label>
             <input type="hidden" name="active_hidden" value="1" />
             {edit && <button className="btn">Save</button>}
           </form>
         ))}
-        {edit && <form method="post" action="/api/admin/products" style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
+        {edit && <form method="post" action="/api/admin/products" className="variant-editor">
           <input type="hidden" name="action" value="variant_save" /><input type="hidden" name="id" value={id} />
           <input name="size" placeholder="Size" size={5} required aria-label="New size" /><input name="colour" placeholder="Colour" size={8} aria-label="New colour" /><input name="sku" placeholder="SKU" size={14} aria-label="New SKU" />
-          <input name="price" placeholder="Own price" size={7} aria-label="New price" /><input name="qty" placeholder="Stock" size={4} defaultValue="0" aria-label="New stock" /><button className="btn">Add variant</button>
+          <input name="price" placeholder="Own price" size={7} aria-label="New price" /><select name="image_url" aria-label="New variant image"><option value="">Use product gallery</option>{imgs.map((im,j) => <option key={im.id} value={im.url}>Product image {j+1}</option>)}</select><input name="qty" placeholder="Stock" size={4} defaultValue="0" aria-label="New stock" /><button className="btn">Add variant</button>
         </form>}
       </div>
       <h3 style={{ marginTop: 24 }}>Images</h3>

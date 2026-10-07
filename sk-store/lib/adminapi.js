@@ -10,7 +10,7 @@ export function adminPost(perm, back, fn) {
     const b = form ? Object.fromEntries([...form.entries()].filter(([, v]) => typeof v === 'string')) : await bodyOf(req);
     const isForm = isMultipart || (req.headers.get('content-type') || '').includes('urlencoded');
     const to = (typeof back === 'function' ? back(b) : back);
-    const reply = (q, extra = {}) => (isForm ? Response.redirect(new URL(to + (to.includes('?') ? '&' : '?') + q, req.url), 303) : Response.json({ ok: !q.startsWith('error'), message: q, ...extra }, { status: q.startsWith('error') ? (extra.status || 400) : 200 }));
+    const reply = (q, extra = {}) => (isForm ? new Response(null, { status: 303, headers: { Location: to + (to.includes('?') ? '&' : '?') + q } }) : Response.json({ ok: !q.startsWith('error'), message: q, ...extra }, { status: q.startsWith('error') ? (extra.status || 400) : 200 }));
     try { return await fn({ req, g, b, form, reply, ok: (m = 'Saved.', x) => reply('saved=' + encodeURIComponent(m), x), err: (m, s = 400) => reply('error=' + encodeURIComponent(m), { status: s }) }); }
     catch (e) { console.error(e); return reply('error=' + encodeURIComponent(e.userMessage || (e.userFacing ? e.message : 'Something went wrong.')), { status: e.userFacing ? 400 : 500 }); }
   };

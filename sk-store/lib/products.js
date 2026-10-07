@@ -3,7 +3,7 @@ export { price } from './format';
 // Public catalogue: only active, non-archived products. Prices shown are the effective (sale) price.
 const base = `select p.id,p.slug,p.name,p.category,p.price_cents,p.sale_price_cents,p.featured,p.description,p.meta_title,p.meta_description,
  coalesce((select json_agg(json_build_object('url',i.url,'bg',i.bg,'alt',i.alt) order by i.position,i.id) from product_images i where i.product_id=p.id),'[]') images,
- coalesce((select json_agg(json_build_object('size',v.size,'colour',v.colour,'qty',v.qty,'price_cents',v.price_cents) order by v.id) from variants v where v.product_id=p.id and v.active),'[]') variants,
+ coalesce((select json_agg(json_build_object('size',v.size,'colour',v.colour,'qty',v.qty,'price_cents',v.price_cents,'image_url',v.image_url) order by v.id) from variants v where v.product_id=p.id and v.active),'[]') variants,
  (select round(avg(r.rating)::numeric,1)::float from reviews r where r.product_id=p.id and r.status='APPROVED') rating,
  (select count(*)::int from reviews r where r.product_id=p.id and r.status='APPROVED') review_count
  from products p where p.active and p.archived_at is null`;

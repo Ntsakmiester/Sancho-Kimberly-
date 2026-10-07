@@ -11,7 +11,11 @@ export async function GET(req) {
 }
 const REASONS = ['PURCHASE', 'MANUAL_ADJUSTMENT', 'RESTOCK', 'CORRECTION', 'RETURN'];
 export const POST = adminPost('inventory.edit', '/admin/dashboard/inventory', async ({ g, b, ok, err }) => {
-  const vid = int(b.variant_id); const delta = int(b.delta); const reason = REASONS.includes(b.reason) ? b.reason : null;
+  const vid = int(b.variant_id);
+  const quantity = Number(b.quantity);
+  if (b.operation != null && (!['add', 'remove'].includes(b.operation) || !Number.isSafeInteger(quantity) || quantity <= 0)) return err('Enter a positive whole number of units and choose Add or Remove.');
+  const delta = b.operation != null ? (b.operation === 'remove' ? -quantity : quantity) : Number(b.delta);
+  if (!Number.isSafeInteger(delta)) return err('Enter a whole-number stock change.'); const reason = REASONS.includes(b.reason) ? b.reason : null;
   if (!vid || !delta) return err('Enter a stock change that is not zero.');
   if (!reason) return err('Choose a reason.');
   const client = await pool.connect();

@@ -85,3 +85,49 @@ input:focus,select:focus{outline:0;border-color:var(--fg)}
 @media(max-width:360px){header .wrap{gap:16px}header .logo{min-width:0;flex:1}header .logo img{max-width:100%;height:auto;max-height:15px}header nav{flex-shrink:0;gap:16px}}
 .searchbar{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}.searchbar input,.searchbar select{padding:8px;min-width:0;flex:1 1 140px}
 @media(max-width:640px){.owner-table-scroll,.admin-scroll{overflow-x:auto}}
+
+/* Scoped back-office system. Storefront composition and homepage type stay intact. */
+:root{--ease-out:cubic-bezier(.23,1,.32,1);--office-surface:var(--bg);--office-tint:var(--soft)}
+.backoffice{max-width:1240px;padding-top:40px;min-height:75vh}
+.backoffice>h2{margin-bottom:8px;font-size:clamp(1.7rem,3vw,2.3rem)}
+.backoffice>.low{margin-top:0;overflow-wrap:anywhere}
+.office-shell{display:grid;grid-template-columns:200px minmax(0,1fr);gap:32px;margin-top:28px;align-items:start}
+.office-shell aside{position:sticky;top:80px}
+.office-nav{display:flex;flex-direction:column;gap:4px;padding:10px;border:1px solid var(--line);background:var(--office-tint);border-radius:20px;font-size:.9rem}
+.office-nav a,.office-logout{display:block;padding:10px 12px;border-radius:12px;text-decoration:none;line-height:1.3;color:var(--muted);font-weight:500;transition:color 150ms ease,background-color 150ms ease}
+.office-nav a[aria-current=page]{background:var(--bg);color:var(--fg);box-shadow:0 2px 8px #00000008;font-weight:650}
+.office-nav form{border-top:1px solid var(--line);margin-top:8px;padding-top:8px}
+.office-logout{background:none;border:0;cursor:pointer;font:inherit;text-align:left;width:100%;color:var(--fg)}
+.office-content{min-width:0}.office-content h3{font-size:1.25rem;letter-spacing:-.02em;line-height:1.25;margin:0 0 16px}
+.office-page-heading{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:16px}.office-page-heading h3{font-size:1.65rem;margin:0}
+.eyebrow{font-size:.7rem;letter-spacing:.1em;font-weight:650;color:var(--muted);margin:0 0 8px}
+.office-action{font-size:.85rem;font-weight:600;text-decoration:none;padding:8px 0}.office-actions{display:flex;gap:20px;align-items:center;flex-wrap:wrap;margin-bottom:20px}
+.stats-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin:24px 0 32px}
+.stat-card{border:1px solid var(--line);border-radius:20px;padding:22px 20px;background:var(--office-surface);box-shadow:0 4px 18px #00000004;min-width:0}
+.stat-accent{background:var(--office-tint);border-color:transparent}.stat-label{font-size:.8rem;line-height:1.4;color:var(--muted);margin-bottom:12px}.stat-value{font-size:clamp(1.5rem,2.4vw,2rem);font-weight:650;letter-spacing:-.04em;line-height:1.15;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.service-summary{border:1px solid var(--line);border-radius:20px;padding:24px;margin:20px 0;background:var(--office-tint)}
+.service-summary dl{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;margin:20px 0}.service-summary dt{font-size:.8rem;color:var(--muted);margin-bottom:8px}.service-summary dd{margin:0;font-size:.9rem;font-weight:600}
+.status-pill{display:inline-block;border:1px solid var(--line);border-radius:999px;padding:4px 10px;background:var(--bg);font-size:.75rem;letter-spacing:.02em}
+.office-table-scroll{overflow-x:auto;border:1px solid var(--line);border-radius:16px;margin:20px 0;overscroll-behavior-x:contain}
+.office-table-scroll th{background:var(--soft);font-size:.75rem;color:var(--muted);font-weight:600;white-space:nowrap;padding:14px 16px!important}.office-table-scroll td{padding:14px 16px!important;font-size:.9rem}.office-table-scroll table{margin:0}
+.backoffice input:not([type=hidden]):not([type=checkbox]):not([type=radio]),.backoffice select,.backoffice textarea{border:1px solid var(--line);border-radius:10px;background:var(--bg);padding:11px 12px;margin-bottom:12px;min-height:44px}
+.backoffice select{appearance:auto}.backoffice input[type=checkbox],.backoffice input[type=radio]{width:auto;min-height:0;margin:0 6px 0 0;accent-color:var(--fg)}
+.backoffice :is(input,select,textarea):focus-visible{outline:2px solid var(--fg);outline-offset:2px}.backoffice .label{display:block;color:var(--fg);font-size:.8rem;font-weight:500}.backoffice .label input,.backoffice .label select,.backoffice .label textarea{margin-top:6px}
+.office-form{padding:24px;border:1px solid var(--line);border-radius:20px;background:var(--office-tint)}.backoffice .btn{font-size:.85rem;padding:12px 18px}
+.stock-adjust{display:grid;grid-template-columns:140px 90px;gap:6px;min-width:244px}.stock-adjust :is(input,select){margin:0!important}.stock-adjust select[name=reason],.stock-adjust input[name=note]{grid-column:1/-1}.stock-adjust .btn{grid-column:1/-1}
+.image-input{margin:16px 0 24px}.image-input>label{font-size:.9rem;font-weight:600}.image-input .low{font-size:.8rem}.image-previews{display:flex;gap:10px;flex-wrap:wrap}.image-previews figure{margin:0;width:84px}.image-previews img{width:84px;height:100px;border-radius:10px;object-fit:cover}.image-previews figcaption{font-size:.7rem;color:var(--muted);margin-top:4px}
+.variant-field{border:0;padding:0;margin:0}.colour-options{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:24px}.colour-options button{background:var(--bg);color:var(--fg);border:1.5px solid var(--line);border-radius:999px;padding:10px 18px;font:500 .9rem system-ui;cursor:pointer;min-height:44px;transition:background-color 150ms ease,color 150ms ease}
+.colour-options button.sel{background:var(--fg);color:var(--bg);border-color:var(--fg)}.colour-options button:disabled{opacity:.4;cursor:not-allowed}
+.product-reveal{min-width:0;opacity:1;transform:translateY(0);transition:opacity 240ms var(--ease-out),transform 240ms var(--ease-out)}.product-reveal.reveal-pending{opacity:0;transform:translateY(12px)}
+.backoffice .btn,.colour-options button,.pdp .sizes button{transition:transform 120ms var(--ease-out),opacity 150ms ease,background-color 150ms ease,color 150ms ease}.backoffice .btn:active,.colour-options button:active{transform:scale(.97)}
+@media(hover:hover) and (pointer:fine){.office-nav a:hover,.office-logout:hover{color:var(--fg);background:var(--bg)}.office-action:hover{text-decoration:underline}}
+@media(max-width:900px){.office-shell{grid-template-columns:170px minmax(0,1fr);gap:20px}.stats-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:640px){.backoffice{padding-top:28px}.office-shell{display:block;margin-top:20px}.office-shell aside{position:static;margin-bottom:28px}.office-nav{flex-direction:row;flex-wrap:nowrap;overflow-x:auto;gap:4px;padding:6px;border-radius:14px;scrollbar-width:thin}.office-nav a{white-space:nowrap;padding:12px;flex-shrink:0}.office-nav form{border-top:0;border-left:1px solid var(--line);margin:0;padding:0;flex-shrink:0}.office-logout{white-space:nowrap;padding:12px}.stats-grid{gap:10px}.stat-card{padding:18px 14px;border-radius:16px}.stat-label{font-size:.75rem}.stat-value{font-size:1.5rem}.service-summary{padding:20px}.service-summary dl{grid-template-columns:1fr;gap:16px}.service-summary dl>div{display:flex;align-items:center;justify-content:space-between;gap:12px}.service-summary dt{margin:0}.office-form{padding:20px}.office-page-heading h3{font-size:1.45rem}}
+@media(prefers-reduced-motion:reduce){.product-reveal,.product-reveal.reveal-pending{transform:none;opacity:1;transition:none}.backoffice .btn,.colour-options button,.pdp .sizes button{transition:opacity 150ms ease,color 150ms ease,background-color 150ms ease}.btn:active,.card:active .tile,.sizes button:active,.colour-options button:active{transform:none}}
+@media(prefers-reduced-transparency:reduce),(prefers-contrast:more){header{background:var(--bg);backdrop-filter:none;-webkit-backdrop-filter:none}.stat-accent{border-color:var(--line)}}
+.variant-editor{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;border:1px solid var(--line);border-radius:16px;padding:16px;margin-bottom:12px;align-items:center}.variant-editor :is(input,select){margin-bottom:0!important}.variant-editor [name=image_url]{grid-column:span 2}.variant-editor label{font-size:.8rem}.variant-editor .btn{justify-self:start}
+@media(max-width:640px){.variant-editor{grid-template-columns:repeat(2,minmax(0,1fr))}.variant-editor [name=image_url]{grid-column:1/-1}}
+/* Static fallback; supporting browsers gently materialize a newly opened work area. */
+.office-content{transition:opacity 180ms var(--ease-out)}
+@starting-style{.office-content{opacity:0}}
+@media(prefers-reduced-motion:reduce){.office-content{transition:opacity 100ms ease}}

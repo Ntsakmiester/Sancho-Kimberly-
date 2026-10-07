@@ -1,28 +1,20 @@
+import Link from 'next/link';
 import pool from '../../../lib/db';
-import { price } from '../../../lib/format';
+import { money } from '../../../lib/format';
 import { getServiceState } from '../../../lib/service';
+import { Stats, Stat } from '../../../components/ui';
 export const dynamic = 'force-dynamic';
-const card = { border: '1px solid #ddd', borderRadius: 8, padding: 16, minWidth: 160 };
 export default async function Overview() {
   const [rev, orders, customers, products, admins, staff, state] = await Promise.all([
-    pool.query("select coalesce(sum(total_cents),0)::int t, count(*)::int c from orders where status<>'cancelled'"),
-    pool.query('select count(*)::int c from orders'),
-    pool.query("select count(distinct email)::int c from orders"),
-    pool.query('select count(*)::int c from products where active'),
-    pool.query("select count(*)::int c from users where role='admin'"),
-    pool.query("select count(*)::int c from users where role='staff'"),
-    getServiceState(),
+    pool.query("select coalesce(sum(amount_cents),0)::bigint t from payments where status in ('PAID','REFUNDED','PARTIALLY_REFUNDED')"),
+    pool.query('select count(*)::int c from orders'), pool.query("select count(*)::int c from users where role='customer'"),
+    pool.query('select count(*)::int c from products where active and archived_at is null'),
+    pool.query("select count(*)::int c from users where role='admin' and active"), pool.query("select count(*)::int c from users where role='staff' and active"), getServiceState(),
   ]);
-  const cells = [
-    ['Total revenue', price(rev.rows[0].t)],
-    ['Orders', orders.rows[0].c],
-    ['Customers', customers.rows[0].c],
-    ['Active products', products.rows[0].c],
-    ['Administrators', admins.rows[0].c],
-    ['Staff', staff.rows[0].c],
-    ['Site status', state.status],
-    ['Payment status', state.payment_status],
-    ['Next payment date', state.next_payment_date ? String(state.next_payment_date).slice(0, 10) : '-'],
-  ];
-  return <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12 }}>{cells.map(([k, v]) => <div key={k} style={card}><div className="low">{k}</div><div style={{ fontSize: 22, fontWeight: 700 }}>{v}</div></div>)}</div>;
+  return <><div className="office-page-heading"><div><p className="eyebrow">OWNER OVERVIEW</p><h3>Your store, in focus</h3></div><Link className="office-action" href="/admin/dashboard">Store management &rarr;</Link></div>
+    <p className="lead">Verified payments, store activity and service status.</p>
+    <Stats><Stat accent label="Verified revenue · all time" value={money(Number(rev.rows[0].t))} /><Stat label="Total orders" value={orders.rows[0].c} /><Stat label="Customers" value={customers.rows[0].c} /><Stat label="Active products" value={products.rows[0].c} /><Stat label="Active administrators" value={admins.rows[0].c} /><Stat label="Active staff" value={staff.rows[0].c} /></Stats>
+    <div className="service-summary"><div><p className="eyebrow">SERVICE & LICENCE</p><h3>Store status</h3></div><dl><div><dt>Site</dt><dd><span className="status-pill">{state.status}</span></dd></div><div><dt>Service payment</dt><dd>{state.payment_status}</dd></div><div><dt>Next payment</dt><dd>{state.next_payment_date ? String(state.next_payment_date).slice(0,10) : 'Not scheduled'}</dd></div></dl><Link className="office-action" href="/owner/dashboard/service">Manage service &rarr;</Link></div>
+    <p className="low">Revenue is gross verified payments before fees and refunds. See Finance for net revenue. Service payment status is separate from customer checkout payments.</p>
+  </>;
 }

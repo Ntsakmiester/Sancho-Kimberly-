@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import BackofficeNav from '../../../components/BackofficeNav';
 import { cookies } from 'next/headers';
 import { requirePageRole } from '../../../lib/pageguard';
 import { permsOf } from '../../../lib/perms';
@@ -11,14 +12,12 @@ export default async function AdminLayout({ children }) {
   const u = await requirePageRole(['owner', 'admin', 'staff'], '/admin/login');
   const perms = await permsOf(u);
   return (
-    <section className="wrap shop owner-panel">
+    <section className="wrap shop owner-panel backoffice">
       <h2>{u.role === 'owner' ? 'Store management' : 'Administrator dashboard'}</h2>
       <p className="low">Signed in as {u.email} ({u.role}){u.role === 'owner' && <> &middot; <Link href="/owner/dashboard">Owner panel</Link></>}</p>
-      <nav aria-label="Admin" style={{ display: 'flex', flexWrap: 'wrap', gap: 12, margin: '12px 0 20px' }}>
-        {NAV.filter(([, , p]) => !p || (p === 'audit' ? u.role !== 'staff' : perms.has(p))).map(([h, l]) => <Link key={h} href={h}>{l}</Link>)}
-        <form method="post" action="/api/auth/logout" style={{ display: 'inline' }}><button style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', color: '#06c', textDecoration: 'underline' }}>Log out</button></form>
-      </nav>
+      <div className="office-shell"><aside><BackofficeNav items={NAV.filter(([, , p]) => !p || (p === 'audit' ? u.role !== 'staff' : perms.has(p)))} label="Admin navigation" /></aside><div className="office-content">
       {children}
+      </div></div>
     </section>
   );
 }

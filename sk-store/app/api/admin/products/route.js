@@ -3,6 +3,7 @@ import { adminPost, int, cents, slugify } from '../../../../lib/adminapi';
 import { requirePerm, deny } from '../../../../lib/perms';
 import { adjustVariant } from '../../../../lib/inventory';
 import { audit } from '../../../../lib/audit';
+import { readImage } from '../../../../lib/upload';
 export const dynamic = 'force-dynamic';
 export async function GET(req) {
   const g = await requirePerm(req, 'products.view'); if (!g.user) return deny(g);
@@ -10,7 +11,7 @@ export async function GET(req) {
   const r = await pool.query(`select id,slug,name,category,price_cents,sale_price_cents,active,featured,archived_at,count(*) over() total from products where ($1='' or name ilike '%'||$1||'%' or slug ilike '%'||$1||'%') order by id desc limit 25 offset $2`, [q, (page - 1) * 25]);
   return Response.json({ products: r.rows });
 }
-export const POST = adminPost(null, (b) => (b.id ? '/admin/dashboard/products/' + b.id : '/admin/dashboard/products'), async ({ g, b, ok, err, reply }) => {
+export const POST = adminPost(null, (b) => (b.id ? '/admin/dashboard/products/' + b.id : '/admin/dashboard/products'), async ({ g, b, form, ok, err, reply }) => {
   const act = String(b.action || '');
   const can = (p) => g.perms.has(p);
   const pid = int(b.id);
@@ -30,9 +31,24 @@ export const POST = adminPost(null, (b) => (b.id ? '/admin/dashboard/products/' 
     const vals = [name, slug, cat.name, cat.id, price, sale, String(b.description || '').slice(0, 5000), b.featured === 'on' || b.featured === 'true', b.visible === 'off' ? false : true, String(b.sku || '').trim().slice(0, 60) || null, Math.max(0, int(b.low_stock_threshold, 3)), String(b.meta_title || '').slice(0, 70) || null, String(b.meta_description || '').slice(0, 160) || null];
     try {
       if (act === 'create') {
-        const r = await pool.query('insert into products(name,slug,category,category_id,price_cents,sale_price_cents,description,featured,active,sku,low_stock_threshold,meta_title,meta_description) values($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13) returning id', vals);
-        await audit('PRODUCT_CREATED', { accountId: g.user.id, role: g.user.role, ip: g.ip, record: name, entity: 'product', entityId: r.rows[0].id, newValue: { name, price_cents: price } });
-        return reply('saved=Created.', { id: r.rows[0].id, location: `/admin/dashboard/products/${r.rows[0].id}` });
+        const files = (form?.getAll('images') || []).filter(f => typeof f !== 'string' && f.size);
+        if (files.length > 8) return err('Choose up to 8 images.');
+        const images = [];
+        for (const file of files) images.push(await readImage(file));
+        const client = await pool.connect(); let id;
+        try {
+          await client.query('begin');
+          const r = await client.query('insert into products(name,slug,category,category_id,price_cents,sale_price_cents,description,featured,active,sku,low_stock_threshold,meta_title,meta_description) values($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13) returning id', vals);
+          id = r.rows[0].id;
+          for (let i = 0; i < images.length; i++) {
+            const { buf, mime } = images[i];
+            const m = (await client.query('insert into media(mime,bytes,data,created_by) values($1,$2,$3,$4) returning id', [mime, buf.length, buf, g.user.id])).rows[0];
+            await client.query('insert into product_images(product_id,url,media_id,alt,position) values($1,$2,$3,$4,$5)', [id, '/api/media/' + m.id, m.id, name, i]);
+          }
+          await client.query('commit');
+        } catch (e) { await client.query('rollback').catch(() => {}); throw e; } finally { client.release(); }
+        await audit('PRODUCT_CREATED', { accountId: g.user.id, role: g.user.role, ip: g.ip, record: name, entity: 'product', entityId: id, newValue: { name, price_cents: price, images: images.length } });
+        return reply('saved=Created.', { id, location: `/admin/dashboard/products/${id}` });
       }
       if (!cur) return err('Product not found.', 404);
       await pool.query('update products set name=$1,slug=$2,category=$3,category_id=$4,price_cents=$5,sale_price_cents=$6,description=$7,featured=$8,active=$9,sku=$10,low_stock_threshold=$11,meta_title=$12,meta_description=$13,updated_at=now() where id=$14', [...vals, pid]);
@@ -67,7 +83,7 @@ export const POST = adminPost(null, (b) => (b.id ? '/admin/dashboard/products/' 
         await client.query('update variants set size=$1,colour=$2,sku=$3,price_cents=$4,active=$5,low_stock_threshold=$6,image_url=$7,updated_at=now() where id=$8', [size, colour, sku, price, !(b.active_hidden === '1' && !b.active), low, String(b.image_url || '').slice(0, 300) || null, vid]);
         if (qty !== old.qty) { if (!can('inventory.edit')) { await client.query('rollback'); return forbid(); } await adjustVariant(client, { variantId: vid, delta: qty - old.qty, reason: 'MANUAL_ADJUSTMENT', userId: g.user.id, note: 'Edited on product page' }); }
       } else {
-        const r = await client.query('insert into variants(product_id,size,colour,sku,price_cents,qty,active,low_stock_threshold) values($1,$2,$3,$4,$5,0,true,$6) returning id', [pid, size, colour, sku, price, low]);
+        const r = await client.query('insert into variants(product_id,size,colour,sku,price_cents,qty,active,low_stock_threshold,image_url) values($1,$2,$3,$4,$5,0,true,$6,$7) returning id', [pid, size, colour, sku, price, low, String(b.image_url || '').slice(0, 300) || null]);
         if (qty > 0) { if (!can('inventory.edit')) { await client.query('rollback'); return forbid(); } await adjustVariant(client, { variantId: r.rows[0].id, delta: qty, reason: 'INITIAL', userId: g.user.id, note: 'Opening stock' }); }
       }
       await client.query('commit');

@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import ProductImagesInput from '../../../../components/ProductImagesInput';
 import pool from '../../../../lib/db';
 import { pagePerm, pg } from '../../../../lib/adminpage';
 import { money } from '../../../../lib/format';
@@ -19,14 +20,14 @@ export default async function Products({ searchParams: sp }) {
       </Table>
       <Pager base={`/admin/dashboard/products?q=${encodeURIComponent(q)}${arch ? '&archived=1' : ''}`} page={page} size={size} total={rows[0]?.total} />
       {perms.has('products.create') && (
-        <form method="post" action="/api/admin/products" style={{ marginTop: 20, maxWidth: 520 }}>
+        <form method="post" action="/api/admin/products" encType="multipart/form-data" className="office-form" style={{ marginTop: 20, maxWidth: 620 }}>
           <h3>Add a product</h3><input type="hidden" name="action" value="create" />
           <input name="name" placeholder="Product name" required maxLength={150} aria-label="Name" />
           <select name="category_id" required aria-label="Category"><option value="">Category</option>{cats.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}</select>
           <input name="price" placeholder="Price in rand, e.g. 450" required inputMode="decimal" aria-label="Price" />
           <input name="sale_price" placeholder="Sale price (optional)" inputMode="decimal" aria-label="Sale price" />
           <textarea name="description" placeholder="Description" rows={3} style={{ width: '100%' }} aria-label="Description" />
-          <input type="hidden" name="visible" value="off" />
+          <ProductImagesInput /><input type="hidden" name="visible" value="off" />
           <button className="btn">Create (hidden until you activate it)</button>
         </form>
       )}
