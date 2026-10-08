@@ -22,6 +22,13 @@ export default async function Settings({ searchParams }) {
       <label>Gateway fee % (estimate)<input name="gateway_fee_pct" type="text" defaultValue={s.gateway_fee_pct || ''} /></label>
       <label>Gateway fixed fee in cents (estimate)<input name="gateway_fee_fixed_cents" type="text" defaultValue={s.gateway_fee_fixed_cents || ''} /></label>
       <label>Instagram<input name="social_instagram" type="text" defaultValue={s.social_instagram || ''} /></label>
+      <h4 style={{ margin: '18px 0 0' }}>Support assistant contact details</h4>
+      <p style={{ margin: 0, color: '#6b6b6b', fontSize: '.9rem' }}>Shown when a customer asks the support assistant for contact options. Leave a field blank to hide it.</p>
+      <label>WhatsApp number<input name="contact_whatsapp" type="text" defaultValue={s.contact_whatsapp || ''} placeholder="e.g. 082 123 4567" /></label>
+      <label>Cellphone number<input name="contact_phone" type="text" defaultValue={s.contact_phone || ''} placeholder="e.g. 082 123 4567" /></label>
+      <label>Contact email<input name="contact_email" type="email" defaultValue={s.contact_email || ''} placeholder="e.g. hello@sanchokimberly.co.za" /></label>
+      <label>Instagram (assistant)<input name="contact_instagram" type="text" defaultValue={s.contact_instagram || ''} placeholder="Handle or link" /></label>
+      <label>Facebook page<input name="contact_facebook" type="text" defaultValue={s.contact_facebook || ''} placeholder="Page link" /></label>
       <label>TikTok<input name="social_tiktok" type="text" defaultValue={s.social_tiktok || ''} /></label>
       <button className="btn">Save settings</button>
     </form>

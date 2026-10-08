@@ -20,6 +20,13 @@ export default async function Products({ searchParams: sp }) {
       </Table>
       <Pager base={`/admin/dashboard/products?q=${encodeURIComponent(q)}${arch ? '&archived=1' : ''}`} page={page} size={size} total={rows[0]?.total} />
       {perms.has('products.create') && (
+        <form method="post" action="/api/admin/categories" className="office-form" style={{ marginTop: 20, maxWidth: 620 }}>
+          <h3>Add a category</h3><input type="hidden" name="action" value="create" />
+          <input name="name" placeholder="e.g. Hoodies" required maxLength={60} aria-label="Category name" /> <button className="btn">Add category</button>
+          <p className="low" style={{ margin: '6px 0 0' }}>New categories appear in the Category list above and in the shop filters.</p>
+        </form>
+      )}
+      {perms.has('products.create') && (
         <form method="post" action="/api/admin/products" encType="multipart/form-data" className="office-form" style={{ marginTop: 20, maxWidth: 620 }}>
           <h3>Add a product</h3><input type="hidden" name="action" value="create" />
           <input name="name" placeholder="Product name" required maxLength={150} aria-label="Name" />
