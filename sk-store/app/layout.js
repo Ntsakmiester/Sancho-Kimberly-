@@ -6,21 +6,17 @@ import CartProvider from '../components/CartProvider';
 import CartLink from '../components/CartLink';
 import { unreadCount } from '../lib/messages';
 import ServiceBanner from '../components/ServiceBanner';
-import SupportChat from '../components/SupportChat';
+import AIChat from '../components/AIChat';
 import NavDrawer from '../components/NavDrawer';
 import pool from '../lib/db';
-import { getSettings } from '../lib/service';
-import { contactLinks } from '../lib/contact';
+
 export const metadata = { title: 'Sancho Kimberly', description: 'Streetwear from the kasi, delivered nationwide.' };
 export const viewport = { width: 'device-width', initialScale: 1, viewportFit: 'cover' };
 export default async function Root({ children }) {
   const user = await getUser({ headers: headers() });
   const customerSignedIn = user?.role === 'customer';
   const unread = customerSignedIn ? await unreadCount(user.id).catch(() => 0) : 0;
-  // Live delivery facts for the support assistant (first active shipping rate). Fails soft to generic wording.
-  const contacts = contactLinks(await getSettings().catch(() => ({})));
   const menuCats = await pool.query('select name from categories where active order by position,name').then((r) => r.rows.map((x) => x.name)).catch(() => []);
-  const ship = await pool.query('select fee_cents,free_over_cents,est_days_min,est_days_max from shipping_rates where active order by id limit 1').then((r) => r.rows[0] ? { fee: r.rows[0].fee_cents, freeOver: r.rows[0].free_over_cents, min: r.rows[0].est_days_min, max: r.rows[0].est_days_max } : null).catch(() => null);
   return (
     <html lang="en">
       <body><CartProvider>
@@ -34,7 +30,7 @@ export default async function Root({ children }) {
         </div></header>
         <main>{children}</main>
         <footer><div className="wrap"><img className="brandimg mono" src="/logo-mono.png" alt="SK monogram" /><br />Sancho Kimberly &nbsp;&nbsp; @sancho.kimberlyco on TikTok</div></footer>
-        <SupportChat shipping={ship} contacts={contacts} />
+        <AIChat signedIn={customerSignedIn} firstName={((user?.name || '').split(' ')[0]) || ''} />
       </CartProvider></body>
     </html>
   );

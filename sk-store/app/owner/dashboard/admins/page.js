@@ -1,6 +1,6 @@
 import { requirePageRole } from '../../../../lib/pageguard';
 import pool from '../../../../lib/db';
-import { PERMS } from '../../../../lib/perms';
+import { ALL_PERMS } from '../../../../lib/perms';
 export const dynamic = 'force-dynamic';
 const btn = { padding: '4px 10px' };
 export default async function Admins({ searchParams }) {
@@ -30,7 +30,7 @@ export default async function Admins({ searchParams }) {
     <p className="low">Staff can only do what you tick here. Administrators have full store access except owner controls.</p>
     {r.rows.filter((a) => a.role === 'staff').map((a) => <details key={a.id} style={{ marginBottom: 8 }}><summary>{a.name || a.email}</summary>
       <form method="post" action="/api/owner/staff"><input type="hidden" name="id" value={a.id} />
-        {PERMS.map((p) => <label key={p} style={{ display: 'inline-block', marginRight: 12 }}><input type="checkbox" name="permissions" value={p} defaultChecked={gr.some((x) => x.user_id === a.id && x.permission === p)} /> {p}</label>)}
+        {ALL_PERMS.map((p) => <label key={p} style={{ display: 'inline-block', marginRight: 12 }}><input type="checkbox" name="permissions" value={p} defaultChecked={gr.some((x) => x.user_id === a.id && x.permission === p)} /> {p}</label>)}
         <div><button className="btn">Save permissions</button></div></form></details>)}
     <h3 style={{ marginTop: 24 }}>Create an account</h3>
     <form method="post" action="/api/owner/admins" style={{ display: 'grid', gap: 10, maxWidth: 420 }}>

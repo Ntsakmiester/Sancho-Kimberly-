@@ -2,9 +2,16 @@ import pool from './db';
 import { getUser, ipOf } from './auth';
 export const PERMS = ['products.view', 'products.create', 'products.edit', 'products.delete', 'inventory.view', 'inventory.edit', 'orders.view', 'orders.update', 'customers.view',
   'reviews.view', 'reviews.moderate', 'payments.view', 'refunds.create', 'finance.view', 'reports.view', 'notifications.view', 'coupons.manage', 'shipping.manage', 'contact.manage'];
+// AI permissions are NOT auto-granted: the owner grants them explicitly to each admin/staff member.
+export const AI_PERMS = ['ai.view', 'ai.conversations', 'ai.tickets', 'ai.knowledge', 'ai.bots', 'ai.analytics', 'ai.settings'];
+export const ALL_PERMS = [...PERMS, ...AI_PERMS];
 export async function permsOf(user) {
   if (!user) return new Set();
-  if (user.role === 'owner' || user.role === 'admin') return new Set(PERMS);
+  if (user.role === 'owner') return new Set(ALL_PERMS);
+  if (user.role === 'admin') {
+    const g = (await pool.query('select permission from user_permissions where user_id=$1', [user.id])).rows.map((x) => x.permission).filter((x) => AI_PERMS.includes(x));
+    return new Set([...PERMS, ...g]);
+  }
   if (user.role !== 'staff') return new Set();
   const r = await pool.query('select permission from user_permissions where user_id=$1', [user.id]);
   return new Set(r.rows.map((x) => x.permission));
