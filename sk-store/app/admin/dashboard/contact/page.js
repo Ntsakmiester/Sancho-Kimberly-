@@ -3,7 +3,8 @@ import { pagePerm } from '../../../../lib/adminpage';
 import { getSettings } from '../../../../lib/service';
 import { Flash } from '../../../../components/ui';
 export const dynamic = 'force-dynamic';
-export default async function Contact({ searchParams: sp }) {
+export default async function Contact({ searchParams: spPromise }) {
+  const sp = await spPromise;
   await pagePerm('contact.manage');
   const s = await getSettings();
   return (

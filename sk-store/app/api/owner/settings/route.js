@@ -1,3 +1,4 @@
+import { requestUrl } from '../../../../lib/request-url';
 import pool from '../../../../lib/db';
 import { requireRole, audit, ipOf } from '../../../../lib/auth';
 import { bodyOf } from '../../../../lib/authflow';
@@ -20,5 +21,5 @@ export async function POST(req) {
   }
   await audit('SETTINGS_CHANGED', { accountId: g.user.id, role: 'owner', record: 'settings', ip: ipOf(req), entity: 'settings', oldValue: Object.fromEntries(Object.keys(changed).map((k) => [k, old[k] ?? null])), newValue: changed });
   return (req.headers.get('content-type') || '').includes('urlencoded')
-    ? Response.redirect(new URL('/owner/dashboard/settings?saved=1', req.url), 303) : Response.json({ ok: true });
+    ? Response.redirect(new URL('/owner/dashboard/settings?saved=1', requestUrl(req)), 303) : Response.json({ ok: true });
 }

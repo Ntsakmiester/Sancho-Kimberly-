@@ -2,7 +2,8 @@ import { requirePageRole } from '../../../../lib/pageguard';
 import pool from '../../../../lib/db';
 import { Table, Td, Flash } from '../../../../components/ui';
 export const dynamic = 'force-dynamic';
-export default async function Flags({ searchParams: sp }) {
+export default async function Flags({ searchParams: spPromise }) {
+  const sp = await spPromise;
   await requirePageRole('owner', '/owner/login');
   const rows = (await pool.query('select key,enabled,description from feature_flags order by key')).rows;
   return (<>

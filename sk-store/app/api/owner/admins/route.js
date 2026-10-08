@@ -1,10 +1,11 @@
+import { requestUrl } from '../../../../lib/request-url';
 import pool from '../../../../lib/db';
 import { requireRole, audit, ipOf, destroyUserSessions } from '../../../../lib/auth';
 import { hashPassword, token } from '../../../../lib/passwords';
 import { bodyOf, issueReset } from '../../../../lib/authflow';
 export const dynamic = 'force-dynamic';
 const deny = (s) => Response.json({ error: s === 401 ? 'Not authenticated.' : 'Forbidden.' }, { status: s });
-const back = (req, q) => Response.redirect(new URL('/owner/dashboard/admins' + q, req.url), 303);
+const back = (req, q) => Response.redirect(new URL('/owner/dashboard/admins' + q, requestUrl(req)), 303);
 export async function GET(req) {
   const g = await requireRole(req, 'owner');
   if (!g.user) return deny(g.status);

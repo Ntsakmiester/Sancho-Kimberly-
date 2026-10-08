@@ -3,7 +3,8 @@ import { rangeOf, summary, trend } from '../../../../lib/finance';
 import { money } from '../../../../lib/format';
 import { Stats, Stat, Table, Td, RangeBar } from '../../../../components/ui';
 export const dynamic = 'force-dynamic';
-export default async function Finance({ searchParams: sp }) {
+export default async function Finance({ searchParams: spPromise }) {
+  const sp = await spPromise;
   await pagePerm('finance.view');
   const r = rangeOf(sp); const [s, t] = await Promise.all([summary(r), trend(r)]);
   const max = Math.max(1, ...t.map((x) => Number(x.revenue)));

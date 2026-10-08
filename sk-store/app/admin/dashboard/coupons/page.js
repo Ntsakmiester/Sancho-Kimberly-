@@ -3,7 +3,8 @@ import { pagePerm } from '../../../../lib/adminpage';
 import { Table, Td, Flash } from '../../../../components/ui';
 import { money } from '../../../../lib/format';
 export const dynamic = 'force-dynamic';
-export default async function Coupons({ searchParams: sp }) {
+export default async function Coupons({ searchParams: spPromise }) {
+  const sp = await spPromise;
   await pagePerm('coupons.manage');
   const rows = (await pool.query("select c.*,(select count(*)::int from coupon_redemptions r join orders o on o.id=r.order_id where r.coupon_id=c.id and o.payment_status='PAID') used from coupons c order by id desc limit 100")).rows;
   return (

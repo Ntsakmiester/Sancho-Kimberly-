@@ -3,7 +3,8 @@ import { aiPagePerm, AiTabs } from '../../../../../lib/aipage';
 import { Flash } from '../../../../../components/ui';
 export const dynamic = 'force-dynamic';
 const TOOLS = [['search_products', 'Product search'], ['product_details', 'Product details'], ['compare_products', 'Product comparison'], ['recommend_products', 'Recommendations'], ['check_availability', 'Availability checks'], ['own_orders', "Customer's own orders"], ['shipping_info', 'Shipping info'], ['knowledge_search', 'Knowledge base'], ['store_info', 'Store contact info'], ['create_ticket', 'Create support tickets']];
-export default async function Bots({ searchParams: sp }) {
+export default async function Bots({ searchParams: spPromise }) {
+  const sp = await spPromise;
   const { perms } = await aiPagePerm('ai.bots');
   const rows = (await pool.query('select * from ai_bots order by position, id')).rows;
   const edit = sp.edit ? rows.find((r) => r.id === parseInt(sp.edit, 10)) : null;

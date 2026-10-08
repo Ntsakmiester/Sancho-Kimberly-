@@ -4,7 +4,7 @@ import { getUser } from './auth';
 import { permsOf } from './perms';
 // Page-level permission check (the layout already requires a back-office role). Returns { user, perms }.
 export async function pagePerm(perm) {
-  const jar = cookies();
+  const jar = await cookies();
   const u = await getUser({ headers: { get: (k) => (k === 'cookie' ? jar.toString() : null) } });
   if (!u || !['owner', 'admin', 'staff'].includes(u.role)) redirect('/admin/login');
   const perms = await permsOf(u);

@@ -3,7 +3,8 @@ import { pagePerm, pg } from '../../../../lib/adminpage';
 import { redirect } from 'next/navigation';
 import { Table, Td, Pager } from '../../../../components/ui';
 export const dynamic = 'force-dynamic';
-export default async function Audit({ searchParams: sp }) {
+export default async function Audit({ searchParams: spPromise }) {
+  const sp = await spPromise;
   const { user } = await pagePerm(null);
   if (user.role === 'staff') redirect('/admin/dashboard');
   const { page, size, offset } = pg(sp, 50); const q = String(sp?.q || '').trim().slice(0, 60);

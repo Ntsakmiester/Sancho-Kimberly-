@@ -4,7 +4,8 @@ import pool from '../../../../lib/db';
 import { requirePageRole } from '../../../../lib/pageguard';
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Message | Sancho Kimberly', robots: { index: false, follow: false } };
-export default async function Message({ params }) {
+export default async function Message({ params: paramsPromise }) {
+  const params = await paramsPromise;
   const u = await requirePageRole('customer', '/login');
   const id = /^\d{1,15}$/.test(params.id) ? params.id : null;
   if (!id) notFound();

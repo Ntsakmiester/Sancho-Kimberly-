@@ -6,7 +6,9 @@ import { allowedNext } from '../../../../../lib/orders';
 import { Table, Td, Flash } from '../../../../../components/ui';
 import Confirm from '../../../../../components/Confirm';
 export const dynamic = 'force-dynamic';
-export default async function Order({ params, searchParams: sp }) {
+export default async function Order({ params: paramsPromise, searchParams: spPromise }) {
+  const params = await paramsPromise;
+  const sp = await spPromise;
   const { perms } = await pagePerm('orders.view');
   const o = (await pool.query('select * from orders where ref=$1', [params.ref])).rows[0]; if (!o) notFound();
   const items = (await pool.query('select * from order_items where order_id=$1 order by id', [o.id])).rows;

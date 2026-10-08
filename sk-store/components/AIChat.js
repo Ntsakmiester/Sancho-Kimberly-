@@ -19,7 +19,7 @@ function ProductCard({ c }) {
         <div className="price">{price(c.effective_cents ?? c.price_cents)}</div>
         {c.in_stock
           ? c.add_to_cart
-            ? <button className="btn ai-add" onClick={() => { cart.add({ slug: c.add_to_cart.slug, name: c.add_to_cart.name, size: c.add_to_cart.size, colour: c.add_to_cart.colour || '', price_cents: c.add_to_cart.price_cents, image: c.add_to_cart.image }); setAdded(true); setTimeout(() => setAdded(false), 1800); }}>{added ? 'Added \u2713' : `Add size ${c.add_to_cart.size}`}</button>
+            ? <button className="btn ai-add" onClick={() => { cart.add({ slug: c.add_to_cart.slug, name: c.add_to_cart.name, size: c.add_to_cart.size, colour: c.add_to_cart.colour || '', price_cents: c.add_to_cart.price_cents, image: c.add_to_cart.image }); setAdded(true); setTimeout(() => setAdded(false), 1800); }}>{added ? 'Added \u2713' : c.add_to_cart.size === 'One size' ? 'Add to cart' : `Add size ${c.add_to_cart.size}`}</button>
             : <a className="btn ai-add" href={href}>Choose size</a>
           : <span className="low">Out of stock right now</span>}
       </div>
@@ -39,7 +39,7 @@ function OrderCard({ c }) {
 }
 export default function AIChat({ signedIn, firstName }) {
   const pathname = usePathname() || '';
-  if (pathname.startsWith('/admin') || pathname.startsWith('/owner') || pathname.startsWith('/login') || pathname.startsWith('/checkout')) return null;
+  const hidden = pathname.startsWith('/admin') || pathname.startsWith('/owner') || pathname.startsWith('/login') || pathname.startsWith('/checkout');
   const [open, setOpen] = useState(false);
   const [msgs, setMsgs] = useState([]);
   const [input, setInput] = useState('');
@@ -55,6 +55,7 @@ export default function AIChat({ signedIn, firstName }) {
   const [hist, setHist] = useState(null);
   const [sugg, setSugg] = useState([]);
   const boxRef = useRef(null);
+  const busyRef = useRef(false);
   const scroll = () => { requestAnimationFrame(() => { if (boxRef.current) boxRef.current.scrollTop = boxRef.current.scrollHeight; }); };
   useEffect(() => {
     if (!open) return;
@@ -74,18 +75,18 @@ export default function AIChat({ signedIn, firstName }) {
   const send = async (text) => {
     text = (text || input).trim(); if (!text || busy) return;
     setErr(''); setNoteFor(null);
-    setMsgs((m) => [...m, { role: 'user', text }]); setInput(''); setTyping(true); setBusy(true); setSugg([]); scroll();
+    setMsgs((m) => [...m, { role: 'user', text }]); setInput(''); setTyping(true); setBusy(true); busyRef.current = true; setSugg([]); scroll();
     try {
       const r = await fetch('/api/ai/chat', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ text, conversation_id: cid }) });
       const d = await r.json().catch(() => ({}));
       if (r.status === 429) { setErr(d.message?.content || 'A moment please - you are sending messages very quickly.'); return; }
-      if (d.error) throw new Error(d.error);
+      if (!r.ok || d.error) throw new Error(d.error || 'Chat request failed');
       if (d.conversationId) setCid(d.conversationId);
       if (d.handoff) setHuman(true);
       if (d.message?.content) setMsgs((m) => [...m, { role: 'assistant', id: d.message.id, text: d.message.content, cards: toCards(d) }]);
       if (Array.isArray(d.suggestions) && d.suggestions.length) setSugg(d.suggestions.slice(0, 3));
     } catch (e) { setErr('Sorry, the assistant is unavailable right now. Please try again.'); }
-    finally { setTyping(false); setBusy(false); scroll(); }
+    finally { setTyping(false); setBusy(false); busyRef.current = false; scroll(); }
   };
   const feedback = async (mid, rating, noteText) => {
     try { await fetch('/api/ai/feedback', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ message_id: mid, rating, note: noteText || undefined }) }); } catch (e) { /* soft */ }
@@ -104,9 +105,37 @@ export default function AIChat({ signedIn, firstName }) {
       setCid(id); setHuman(d.conversation?.status === 'HUMAN'); setHist(null); setSugg([]); scroll();
     }
   };
+  // Human replies arrive through the conversation API, not the AI send response.
+  // Refresh only the active handoff chat; stop on close/new chat/unmount.
+  useEffect(() => {
+    if (!open || !human || !cid || hidden) return;
+    let cancelled = false;
+    let fetching = false;
+    const refresh = async () => {
+      if (fetching || busyRef.current || document.hidden) return;
+      fetching = true;
+      try {
+        const r = await fetch(`/api/ai/conversations/${cid}`, { cache: 'no-store' });
+        if (!r.ok) return;
+        const d = await r.json();
+        if (cancelled || busyRef.current || !Array.isArray(d.messages)) return;
+        setMsgs((old) => {
+          const latest = d.messages.map((m) => ({ role: m.role === 'customer' ? 'user' : 'assistant', id: m.role === 'assistant' ? m.id : undefined, text: m.content, cards: toCards(m), feedback: m.feedback || undefined }));
+          if (JSON.stringify(old) === JSON.stringify(latest)) return old;
+          scroll(); return latest;
+        });
+        setHuman(d.conversation?.status === 'HUMAN');
+      } catch { /* Keep the conversation on screen and retry on the next refresh. */ }
+      finally { fetching = false; }
+    };
+    refresh();
+    const timer = setInterval(refresh, 5000);
+    return () => { cancelled = true; clearInterval(timer); };
+  }, [open, human, cid, hidden]);
   const newConv = () => { setMsgs([]); setCid(null); setHuman(false); setHist(null); setErr(''); setSugg([]); };
+  if (hidden) return null;
   return (<>
-    <button className="support-fab" aria-label="Chat with us" aria-expanded={open} onClick={() => setOpen(!open)}>&#128172;</button>
+    <button className="support-fab" aria-label="Chat with us" aria-expanded={open} onClick={() => setOpen(!open)}><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" /></svg></button>
     {open && (
       <section className="support-panel ai-panel" aria-label={`${name} chat`}>
         <header>

@@ -1,3 +1,4 @@
+import { requestUrl } from '../../../../lib/request-url';
 import pool from '../../../../lib/db';
 import { requireRole, audit, ipOf } from '../../../../lib/auth';
 import { bodyOf } from '../../../../lib/authflow';
@@ -17,7 +18,7 @@ export async function POST(req) {
   const b = await bodyOf(req);
   const isForm = (req.headers.get('content-type') || '').includes('urlencoded');
   const back = '/owner/dashboard/ai';
-  const done = (q) => isForm ? Response.redirect(new URL(back + '?' + q, req.url), 303) : Response.json({ ok: !q.startsWith('error') });
+  const done = (q) => isForm ? Response.redirect(new URL(back + '?' + q, requestUrl(req)), 303) : Response.json({ ok: !q.startsWith('error') });
   const old = (await pool.query('select key,value from settings where key = any($1)', [AI_SETTING_KEYS])).rows;
   const oldMap = Object.fromEntries(old.map((x) => [x.key, x.value]));
   const changes = {};

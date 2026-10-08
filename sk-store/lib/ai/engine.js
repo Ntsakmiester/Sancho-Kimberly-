@@ -3,7 +3,7 @@
 // knowledge retrieval, provider call (or fixed-answer mode), persistence, audit.
 import crypto from 'node:crypto';
 import pool from '../db';
-import { rateLimit } from '../rate';
+import { rateLimits } from '../rate';
 import { audit } from '../audit';
 import { notifyAdmins, notify } from '../notify';
 import { aiConfig } from './settings';
@@ -118,13 +118,20 @@ export async function respond({ user, ip, guestKey, conversationId, text, client
   // Conversation: resume only your own, otherwise start fresh.
   let conv = conversationId ? await loadConversation(conversationId) : null;
   if (conv && !owns(conv, user, guestKey)) return { error: 'forbidden' };
+  // Per-identity, per-IP and shared daily guest budgets are atomic. Clearing
+  // cookies cannot reset the IP budget; distributed guests share a spending cap.
+  const idKey = user ? 'u' + user.id : 'g' + guestKey;
+  const budgets = [
+    { key: 'ai:' + idKey, max: cfg.ratePerMin, windowSec: 60 },
+    { key: 'ai:daily:' + idKey, max: cfg.dailyMax, windowSec: 86400 },
+  ];
+  if (!user) budgets.push(
+    { key: 'ai:guest-ip:' + ip, max: cfg.ratePerMin, windowSec: 60 },
+    { key: 'ai:guest-ip-daily:' + ip, max: cfg.dailyMax, windowSec: 86400 },
+    { key: 'ai:guest-global-daily', max: Math.max(1, parseInt(process.env.AI_GUEST_DAILY_MAX, 10) || 1000), windowSec: 86400 },
+  );
+  if (!(await rateLimits(budgets))) return { rateLimited: true, message: { content: 'The assistant message limit has been reached. Please try again later, or contact the store directly.' }, ...(conv ? { conversationId: conv.public_id } : {}) };
   if (!conv || conv.status === 'CLOSED') conv = await createConversation({ user, guestKey });
-
-  // Rate limits: per identity per minute, and a daily ceiling.
-  const idKey = user ? 'u' + user.id : 'g' + (guestKey || ip);
-  if (!(await rateLimit('ai:' + idKey, cfg.ratePerMin, 60))) return { rateLimited: true, message: { content: "You're sending messages faster than I can keep up. Give me a few seconds and try again." }, conversationId: conv.public_id };
-  const today = (await pool.query("select count(*)::int c from ai_messages m join ai_conversations c on c.id=m.conversation_id where m.role='customer' and m.created_at > now() - interval '1 day' and (c.user_id=$1 or ($1::int is null and c.guest_key=$2))", [user?.id || null, user ? '' : guestKey || ''])).rows[0].c;
-  if (today >= cfg.dailyMax) return { rateLimited: true, message: { content: "That's all the help I can give today. Please try again tomorrow, or contact the store directly." }, conversationId: conv.public_id };
 
   await recordMessage(conv.id, { role: 'customer', content: text });
 
@@ -190,7 +197,9 @@ export async function respond({ user, ip, guestKey, conversationId, text, client
     var fbLinks2 = fb.links;
   }
   // Never leak secret-shaped strings, whatever the provider said.
-  reply = String(reply).replace(/(sk-[A-Za-z0-9_-]{16,}|AIza[0-9A-Za-z_-]{20,}|sk-ant-[A-Za-z0-9_-]{16,})/g, '[redacted]');
+  reply = String(reply);
+  for (const key of [...(cfg.primaryKeys || []), ...(cfg.backupKeys || [])]) if (key) reply = reply.split(key).join('[redacted]');
+  reply = reply.replace(/(nvapi-[A-Za-z0-9_-]{16,}|sk-[A-Za-z0-9_-]{16,}|AIza[0-9A-Za-z_-]{20,}|sk-ant-[A-Za-z0-9_-]{16,})/g, '[redacted]');
   const links = fbLinks || fbLinks2 || null;
   const ms = Date.now() - started;
   const mid = await recordMessage(conv.id, { role: 'assistant', content: reply, intent, bot_key: bot?.key || botKey, products, orders, links, tokens_in: tokensIn, tokens_out: tokensOut, response_ms: ms, mode });

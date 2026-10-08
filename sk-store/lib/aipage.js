@@ -5,7 +5,7 @@ import { getUser } from './auth';
 import { permsOf, AI_PERMS } from './perms';
 // Page guard for the AI section: any back-office user holding at least one AI permission.
 export async function aiPagePerm(perm) {
-  const jar = cookies();
+  const jar = await cookies();
   const u = await getUser({ headers: { get: (k) => (k === 'cookie' ? jar.toString() : null) } });
   if (!u || !['owner', 'admin', 'staff'].includes(u.role)) redirect('/admin/login');
   const perms = await permsOf(u);

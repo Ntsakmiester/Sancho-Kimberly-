@@ -2,6 +2,7 @@
 # Stage 2 acceptance tests: authorization matrix + password-reset token behavior.
 # Needs the app running on $BASE (default http://localhost:3100) and psql access via $PSQL.
 set -u
+curl() { command curl -H "Origin: ${BASE:-http://localhost:3100}" "$@"; }
 BASE="${BASE:-http://localhost:3100}"
 PSQL="${PSQL:-psql}"
 PASS=0; FAIL=0

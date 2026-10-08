@@ -2,7 +2,8 @@ import pool from '../../../../../lib/db';
 import { aiPagePerm, AiTabs } from '../../../../../lib/aipage';
 import { Flash } from '../../../../../components/ui';
 export const dynamic = 'force-dynamic';
-export default async function Knowledge({ searchParams: sp }) {
+export default async function Knowledge({ searchParams: spPromise }) {
+  const sp = await spPromise;
   const { perms } = await aiPagePerm('ai.knowledge');
   const rows = (await pool.query('select k.*,u.email by_email from ai_knowledge k left join users u on u.id=k.updated_by order by k.position, k.id')).rows;
   const edit = sp.edit ? rows.find((r) => r.id === parseInt(sp.edit, 10)) : null;

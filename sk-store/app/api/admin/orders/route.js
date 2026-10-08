@@ -1,3 +1,4 @@
+import { requestUrl } from '../../../../lib/request-url';
 import pool from '../../../../lib/db';
 import { adminPost, int } from '../../../../lib/adminapi';
 import { requirePerm, deny } from '../../../../lib/perms';
@@ -6,7 +7,7 @@ import { audit } from '../../../../lib/audit';
 export const dynamic = 'force-dynamic';
 export async function GET(req) {
   const g = await requirePerm(req, 'orders.view'); if (!g.user) return deny(g);
-  const u = new URL(req.url); const q = (u.searchParams.get('q') || '').trim(); const st = u.searchParams.get('status') || ''; const page = Math.max(1, int(u.searchParams.get('page'), 1));
+  const u = new URL(requestUrl(req)); const q = (u.searchParams.get('q') || '').trim(); const st = u.searchParams.get('status') || ''; const page = Math.max(1, int(u.searchParams.get('page'), 1));
   const r = await pool.query(`select id,ref,status,payment_status,name,email,total_cents,created_at,count(*) over() total from orders where ($1='' or ref ilike '%'||$1||'%' or email ilike '%'||$1||'%' or name ilike '%'||$1||'%') and ($2='' or status=$2) order by id desc limit 25 offset $3`, [q, STATUSES.includes(st) ? st : '', (page - 1) * 25]);
   return Response.json({ orders: r.rows });
 }

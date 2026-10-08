@@ -3,7 +3,8 @@ import pool from '../../../lib/db';
 import { requirePageRole } from '../../../lib/pageguard';
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Messages | Sancho Kimberly', robots: { index: false, follow: false } };
-export default async function Inbox({ searchParams: sp }) {
+export default async function Inbox({ searchParams: spPromise }) {
+  const sp = await spPromise;
   const u = await requirePageRole('customer', '/login');
   const only = sp?.show === 'unread';
   const rows = (await pool.query(`select id,type,subject,left(body,120) preview,created_at,read_at from notifications where user_id=$1 and audience='customer'${only ? ' and read_at is null' : ''} order by id desc limit 100`, [u.id])).rows;

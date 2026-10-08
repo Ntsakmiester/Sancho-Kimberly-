@@ -4,7 +4,8 @@ import { Table, Td, Flash } from '../../../../components/ui';
 import MessageComposer from '../../../../components/MessageComposer';
 import { redirect } from 'next/navigation';
 export const dynamic = 'force-dynamic';
-export default async function Messages({ searchParams: sp }) {
+export default async function Messages({ searchParams: spPromise }) {
+  const sp = await spPromise;
   const { user } = await pagePerm('notifications.view');
   if (user.role === 'staff') redirect('/admin/dashboard?error=' + encodeURIComponent('Only the owner or an administrator can message customers.'));
   const rows = await recentMessages();

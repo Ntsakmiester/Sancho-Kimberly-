@@ -9,7 +9,7 @@ export default function AuthForm({ title, sub, action, fields, button, error, no
       <form method="post" action={action} style={{ display: 'grid', gap: 10 }}>
         {fields.map((f) => (
           <input key={f.name} name={f.name} type={f.type || 'text'} placeholder={f.placeholder}
-            defaultValue={f.value || ''} autoComplete={f.autoComplete} required={f.required !== false} />
+            defaultValue={f.value || ''} autoComplete={f.autoComplete} maxLength={f.type === 'password' ? 200 : undefined} required={f.required !== false} />
         ))}
         <button className="btn full">{button}</button>
       </form>

@@ -3,7 +3,8 @@ import pool from '../../../../lib/db';
 import { pagePerm, pg } from '../../../../lib/adminpage';
 import { Table, Td, Pager, Flash } from '../../../../components/ui';
 export const dynamic = 'force-dynamic';
-export default async function Reviews({ searchParams: sp }) {
+export default async function Reviews({ searchParams: spPromise }) {
+  const sp = await spPromise;
   const { perms } = await pagePerm('reviews.view');
   const { page, size, offset } = pg(sp); const st = ['PENDING', 'APPROVED', 'REJECTED'].includes(sp?.status) ? sp.status : '';
   const rows = (await pool.query(`select r.id,r.rating,r.title,r.body,r.status,r.created_at,p.name,u.email,count(*) over()::int total from reviews r join products p on p.id=r.product_id join users u on u.id=r.user_id where ($1='' or r.status=$1) order by (r.status='PENDING') desc, r.id desc limit $2 offset $3`, [st, size, offset])).rows;

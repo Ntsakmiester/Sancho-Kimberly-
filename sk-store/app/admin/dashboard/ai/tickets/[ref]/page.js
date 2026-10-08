@@ -5,7 +5,9 @@ import { Flash } from '../../../../../../components/ui';
 export const dynamic = 'force-dynamic';
 const STATUSES = ['OPEN', 'AI_HANDLING', 'WAITING_FOR_CUSTOMER', 'ESCALATED', 'ASSIGNED', 'RESOLVED', 'CLOSED'];
 const CATS = ['PRODUCT', 'ORDER', 'PAYMENT', 'SHIPPING', 'RETURN', 'REFUND', 'ACCOUNT', 'TECHNICAL', 'GENERAL', 'COMPLAINT'];
-export default async function TicketDetail({ params, searchParams: sp }) {
+export default async function TicketDetail({ params: paramsPromise, searchParams: spPromise }) {
+  const params = await paramsPromise;
+  const sp = await spPromise;
   const { perms, user } = await aiPagePerm('ai.tickets');
   const t = (await pool.query('select t.*,u.email customer_email,s.name staff_name from support_tickets t left join users u on u.id=t.user_id left join users s on s.id=t.assigned_staff_id where t.ref=$1', [params.ref])).rows[0];
   if (!t) notFound();

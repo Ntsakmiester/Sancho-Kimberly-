@@ -1,3 +1,4 @@
+import './local-origin.mjs';
 // Run ONLY against an isolated test database/app: BASE=http://localhost:3100 DATABASE_URL=... OWNER_EMAIL=... OWNER_PASSWORD=... node tests/ui-inventory.test.mjs
 // Creates disposable hidden products and stock movements. Never run against a live store.
 import pg from 'pg';

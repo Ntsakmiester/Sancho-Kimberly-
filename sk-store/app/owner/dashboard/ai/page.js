@@ -1,3 +1,5 @@
+import AIKeys from '../../../../components/AIKeys';
+import AITest from '../../../../components/AITest';
 import pool from '../../../../lib/db';
 import { requirePageRole } from '../../../../lib/pageguard';
 import { getSettings } from '../../../../lib/service';
@@ -5,7 +7,8 @@ import { aiConfig } from '../../../../lib/ai/settings';
 import { providerReady } from '../../../../lib/ai/provider';
 import { Flash } from '../../../../components/ui';
 export const dynamic = 'force-dynamic';
-export default async function OwnerAi({ searchParams: sp }) {
+export default async function OwnerAi({ searchParams: spPromise }) {
+  const sp = await spPromise;
   await requirePageRole('owner', '/owner/login');
   const s = await getSettings();
   const cfg = await aiConfig();
@@ -14,10 +17,12 @@ export default async function OwnerAi({ searchParams: sp }) {
     <Flash sp={sp} /><h3>AI assistant settings</h3>
     <p className="low">
       Provider: <strong>{cfg.provider || 'not set'}</strong> · API keys configured: <strong>{cfg.keyCount}</strong> · Mode right now: <strong>{ready ? 'AI answers' : 'fixed answers (no working provider)'}</strong>.
-      {cfg.provider && cfg.keyCount === 0 && <> Add at least one key to the <code>AI_API_KEYS</code> environment variable on your host - keys never live in this dashboard or the database.</>}
-      {!cfg.provider && <> Set <code>AI_PROVIDER</code> (openai, nvidia, gemini or anthropic) and <code>AI_API_KEYS</code> in your hosting environment to turn on full AI answers. Until then the assistant uses its fixed store answers at no cost.</>}
-      {cfg.provider === 'nvidia' && <> Gemini backup keys configured: <strong>{cfg.backupKeyCount}</strong>. Add Google keys to <code>GEMINI_API_KEYS</code> (comma-separated) on your host for automatic backup. NVIDIA stays primary; <code>GEMINI_MODEL</code> and <code>GEMINI_BASE_URL</code> control only the backup.</>}
+      {cfg.provider && cfg.keyCount === 0 && <> Add NVIDIA keys below, or set <code>AI_API_KEYS</code> on your host.</>}
+      {!cfg.provider && <> Set <code>AI_PROVIDER</code> (openai, nvidia, gemini or anthropic) in your hosting environment, and add keys below or set <code>AI_API_KEYS</code> to turn on full AI answers. Until then the assistant uses its fixed store answers at no cost.</>}
+      {cfg.provider === 'nvidia' && <> Gemini backup keys configured: <strong>{cfg.backupKeyCount}</strong>. Add Google keys below or to <code>GEMINI_API_KEYS</code> (comma-separated) on your host for automatic backup. NVIDIA stays primary; <code>GEMINI_MODEL</code> and <code>GEMINI_BASE_URL</code> control only the backup.</>}
     </p>
+    <AIKeys />
+    <AITest />
     <form method="post" action="/api/owner/ai" className="office-form" style={{ maxWidth: 620 }}>
       <label className="label"><input type="checkbox" name="ai_enabled" value="true" defaultChecked={(s.ai_enabled || 'true') !== 'false'} /> Assistant enabled</label>
       <label className="label"><input type="checkbox" name="ai_proactive" value="true" defaultChecked={(s.ai_proactive || 'true') !== 'false'} /> Proactive help (offers help after a customer views a product for a while)</label>

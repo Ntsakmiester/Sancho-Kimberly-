@@ -4,7 +4,8 @@ import { pagePerm, pg } from '../../../../lib/adminpage';
 import { money } from '../../../../lib/format';
 import { Table, Td, Pager } from '../../../../components/ui';
 export const dynamic = 'force-dynamic';
-export default async function Customers({ searchParams: sp }) {
+export default async function Customers({ searchParams: spPromise }) {
+  const sp = await spPromise;
   await pagePerm('customers.view');
   const { page, size, offset } = pg(sp); const q = String(sp?.q || '').trim().slice(0, 60);
   const rows = (await pool.query(`select u.id,u.name,u.email,u.active,u.created_at,(select count(*)::int from orders o where o.user_id=u.id) orders,(select coalesce(sum(total_cents),0)::bigint from orders o where o.user_id=u.id and o.payment_status in ('PAID','PARTIALLY_REFUNDED')) spent,count(*) over()::int total

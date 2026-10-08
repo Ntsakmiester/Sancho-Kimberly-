@@ -1,3 +1,4 @@
+import { requestUrl } from '../../../../lib/request-url';
 import pool from '../../../../lib/db';
 import { requireRole, audit, ipOf } from '../../../../lib/auth';
 import { getServiceState, SERVICE_STATES, PAYMENT_STATES } from '../../../../lib/service';
@@ -25,5 +26,5 @@ export async function POST(req) {
   if (status !== cur.status) await audit(status === 'SUSPENDED' ? 'SITE_SUSPENDED' : status === 'ACTIVE' ? 'SITE_REACTIVATED' : 'LICENCE_STATUS_CHANGED', { accountId: g.user.id, record: `${cur.status} -> ${status}`, ip });
   if (payment !== cur.payment_status) await audit('PAYMENT_STATUS_CHANGED', { accountId: g.user.id, record: `${cur.payment_status} -> ${payment}`, ip });
   const isForm = (req.headers.get('content-type') || '').includes('urlencoded');
-  return isForm ? Response.redirect(new URL('/owner/dashboard/service?saved=1', req.url), 303) : Response.json({ ok: true });
+  return isForm ? Response.redirect(new URL('/owner/dashboard/service?saved=1', requestUrl(req)), 303) : Response.json({ ok: true });
 }

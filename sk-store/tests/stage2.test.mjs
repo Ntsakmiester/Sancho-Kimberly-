@@ -1,3 +1,4 @@
+import './local-origin.mjs';
 // Stage 2 upgrade tests. Run against a running app: BASE=http://localhost:3100 node tests/stage2.test.mjs
 // Needs DATABASE_URL, OWNER_EMAIL, OWNER_PASSWORD, PAYMENT_PROVIDER=mock and PAYMENT_WEBHOOK_SECRET (same values the app runs with).
 import pg from 'pg';

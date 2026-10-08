@@ -1,3 +1,4 @@
+import { requestUrl } from '../../../../lib/request-url';
 import pool from '../../../../lib/db';
 import { requireRole, audit, ipOf, destroyUserSessions } from '../../../../lib/auth';
 import { bodyOf } from '../../../../lib/authflow';
@@ -19,5 +20,5 @@ export async function POST(req) {
     const r = await pool.query('delete from sessions where user_id<>$1', [g.user.id]);
     await audit('SESSIONS_REVOKED', { accountId: g.user.id, role: 'owner', ip, record: 'all other users (' + r.rowCount + ')', entity: 'user' });
   } else return Response.json({ error: 'Unknown action.' }, { status: 400 });
-  return isForm ? Response.redirect(new URL('/owner/dashboard/security?saved=1', req.url), 303) : Response.json({ ok: true });
+  return isForm ? Response.redirect(new URL('/owner/dashboard/security?saved=1', requestUrl(req)), 303) : Response.json({ ok: true });
 }

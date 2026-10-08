@@ -1,3 +1,4 @@
+import { requestUrl } from '../../../../lib/request-url';
 import pool from '../../../../lib/db';
 import { requireRole, audit, ipOf, destroyUserSessions } from '../../../../lib/auth';
 import { bodyOf } from '../../../../lib/authflow';
@@ -11,7 +12,7 @@ export async function POST(req) {
   const isForm = (req.headers.get('content-type') || '').includes('urlencoded');
   const id = parseInt(b.id, 10);
   const target = (await pool.query("select id,email from users where id=$1 and role in ('admin','staff')", [id])).rows[0];
-  if (!target) return isForm ? Response.redirect(new URL('/owner/dashboard/admins?error=Staff+account+not+found.', req.url), 303) : Response.json({ error: 'Account not found.' }, { status: 404 });
+  if (!target) return isForm ? Response.redirect(new URL('/owner/dashboard/admins?error=Staff+account+not+found.', requestUrl(req)), 303) : Response.json({ error: 'Account not found.' }, { status: 404 });
   const wanted = [].concat(b.permissions || []).flatMap((x) => String(x).split(',')).filter((p) => ALL_PERMS.includes(p));
   const old = (await pool.query('select permission from user_permissions where user_id=$1 order by 1', [id])).rows.map((r) => r.permission);
   const client = await pool.connect();
@@ -22,5 +23,5 @@ export async function POST(req) {
     await client.query('commit');
   } catch (e) { await client.query('rollback').catch(() => {}); throw e; } finally { client.release(); }
   await audit('STAFF_PERMISSIONS_CHANGED', { accountId: g.user.id, role: 'owner', ip: ipOf(req), record: target.email, entity: 'staff', entityId: id, oldValue: { permissions: old }, newValue: { permissions: wanted.sort() } });
-  return isForm ? Response.redirect(new URL('/owner/dashboard/admins?saved=1', req.url), 303) : Response.json({ ok: true, permissions: wanted });
+  return isForm ? Response.redirect(new URL('/owner/dashboard/admins?saved=1', requestUrl(req)), 303) : Response.json({ ok: true, permissions: wanted });
 }

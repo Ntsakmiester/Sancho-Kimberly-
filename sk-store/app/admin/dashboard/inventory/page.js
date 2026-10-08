@@ -3,7 +3,8 @@ import { pagePerm, pg } from '../../../../lib/adminpage';
 import { Table, Td, Pager, Flash } from '../../../../components/ui';
 export const dynamic = 'force-dynamic';
 const REASONS = ['PURCHASE', 'RESTOCK', 'MANUAL_ADJUSTMENT', 'CORRECTION', 'RETURN'];
-export default async function Inventory({ searchParams: sp }) {
+export default async function Inventory({ searchParams: spPromise }) {
+  const sp = await spPromise;
   const { perms } = await pagePerm('inventory.view');
   const { page, size, offset } = pg(sp, 30); const q = String(sp?.q || '').trim().slice(0, 60); const f = sp?.filter || '';
   const rows = (await pool.query(`select v.id,p.name,v.size,v.colour,v.sku,v.qty,coalesce(v.low_stock_threshold,p.low_stock_threshold) low,count(*) over()::int total from variants v join products p on p.id=v.product_id

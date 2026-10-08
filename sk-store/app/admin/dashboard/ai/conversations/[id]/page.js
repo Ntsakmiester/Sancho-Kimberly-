@@ -4,7 +4,9 @@ import { aiPagePerm, AiTabs } from '../../../../../../lib/aipage';
 import { Flash } from '../../../../../../components/ui';
 export const dynamic = 'force-dynamic';
 const fmt = (d) => new Date(d).toLocaleString('en-ZA');
-export default async function ConversationDetail({ params, searchParams: sp }) {
+export default async function ConversationDetail({ params: paramsPromise, searchParams: spPromise }) {
+  const params = await paramsPromise;
+  const sp = await spPromise;
   const { perms, user } = await aiPagePerm('ai.conversations');
   const c = (await pool.query('select c.*,u.email,u.name customer_name,s.name staff_name from ai_conversations c left join users u on u.id=c.user_id left join users s on s.id=c.assigned_staff_id where c.public_id=$1', [params.id])).rows[0];
   if (!c) notFound();

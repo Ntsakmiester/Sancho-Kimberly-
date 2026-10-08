@@ -3,7 +3,8 @@ import { adminPost, slugify } from '../../../../lib/adminapi';
 import { audit } from '../../../../lib/audit';
 export const dynamic = 'force-dynamic';
 // Add a product category from the admin products page. Anyone who may create products may add a category.
-export const POST = adminPost('products.create', '/admin/dashboard/products', async ({ g, b, ok, err }) => {
+const BACKS = ['/admin/dashboard/products', '/owner/dashboard/products'];
+export const POST = adminPost('products.create', (b) => BACKS.includes(b.back) ? b.back : '/admin/dashboard/products', async ({ g, b, ok, err }) => {
   if (b.action !== 'create') return err('Unknown action.');
   const name = String(b.name || '').trim().replace(/\s+/g, ' ').slice(0, 60);
   if (!name) return err('Enter a category name.');

@@ -3,7 +3,8 @@ import { recentMessages } from '../../../../lib/messages';
 import { Table, Td, Flash } from '../../../../components/ui';
 import MessageComposer from '../../../../components/MessageComposer';
 export const dynamic = 'force-dynamic';
-export default async function Messages({ searchParams: sp }) {
+export default async function Messages({ searchParams: spPromise }) {
+  const sp = await spPromise;
   await requirePageRole('owner', '/owner/login');
   const rows = await recentMessages();
   return (<><Flash sp={sp} /><h3>Message customers</h3><MessageComposer back="/owner/dashboard/messages" />

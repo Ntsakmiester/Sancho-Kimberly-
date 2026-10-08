@@ -5,7 +5,8 @@ export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Shop | Sancho Kimberly', alternates: { canonical: '/shop' } };
 const PER = 24;
 const rands = (v) => { const s = String(v ?? '').replace(/[ ,R]/g, ''); if (s === '') return null; const n = parseFloat(s); return Number.isFinite(n) && n >= 0 && n < 1e7 ? Math.round(n * 100) : null; };
-export default async function Shop({ searchParams }) {
+export default async function Shop({ searchParams: searchParamsPromise }) {
+  const searchParams = await searchParamsPromise;
   const [cats, opts] = await Promise.all([categoryNames(), filterOptions()]);
   const cat = cats.includes(searchParams?.cat) ? searchParams.cat : null;
   const q = String(searchParams?.q || '').trim().slice(0, 60);

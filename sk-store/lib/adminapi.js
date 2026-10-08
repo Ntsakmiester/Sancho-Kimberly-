@@ -1,8 +1,10 @@
+import { validOrigin, rejectOrigin } from './csrf';
 import { requirePerm, deny } from './perms';
 import { bodyOf } from './authflow';
 // Shared wrapper for back-office POST endpoints: server-side permission check, parsed body, redirect-or-JSON reply.
 export function adminPost(perm, back, fn) {
   return async (req) => {
+    if (!validOrigin(req)) return rejectOrigin();
     const g = await requirePerm(req, perm);
     if (!g.user) return deny(g);
     const isMultipart = (req.headers.get('content-type') || '').includes('multipart/form-data');

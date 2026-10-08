@@ -2,7 +2,8 @@ import pool from '../../../../../lib/db';
 import { aiPagePerm, AiTabs } from '../../../../../lib/aipage';
 import { Flash } from '../../../../../components/ui';
 export const dynamic = 'force-dynamic';
-export default async function Conversations({ searchParams: sp }) {
+export default async function Conversations({ searchParams: spPromise }) {
+  const sp = await spPromise;
   const { perms } = await aiPagePerm('ai.conversations');
   const q = String(sp.q || '').trim().slice(0, 80);
   const status = ['OPEN', 'HUMAN', 'CLOSED'].includes(sp.status) ? sp.status : '';

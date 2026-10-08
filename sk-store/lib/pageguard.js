@@ -4,7 +4,7 @@ import { getUser } from './auth';
 // Server-side page guard. Wrong role or no session never renders the page.
 export async function requirePageRole(roleSpec, loginPath) {
   const allowed = Array.isArray(roleSpec) ? roleSpec : [roleSpec];
-  const jar = cookies();
+  const jar = await cookies();
   const shim = { headers: { get: (k) => (k === 'cookie' ? jar.toString() : null) } };
   const u = await getUser(shim);
   if (!u) redirect(loginPath);

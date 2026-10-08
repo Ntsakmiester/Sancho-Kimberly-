@@ -1,3 +1,4 @@
+import './local-origin.mjs';
 // Stage 3 AI assistant tests. Run ONLY against an isolated test app/database.
 // Part A (fallback mode, no AI provider env): BASE=http://localhost:3100 DATABASE_URL=... OWNER_EMAIL=... OWNER_PASSWORD=... STAFF=staff@sk.test:StaffPass123 CUST=c1@sk.test:CustPass12345 node tests/ai.test.mjs
 import pg from 'pg'; import assert from 'node:assert/strict';
@@ -64,6 +65,7 @@ try {
   assert.equal(fbrow.rows[0].feedback, 1); ok('thumbs-up feedback recorded');
 
   // 8. per-minute rate limit (default 12/min)
+  await db.query("delete from rate_events where key like 'ai:guest-ip:%' or key like 'ai:guest-entry:%'");
   const first = await chat('hi 0');
   const rlGuest = (first.headers.get('set-cookie') || '').split(';')[0];
   let last;

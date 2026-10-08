@@ -1,7 +1,8 @@
 import AuthForm, { AuthLink } from '../../../components/AuthForm';
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Administrator login | Sancho Kimberly' };
-export default function AdminLogin({ searchParams }) {
+export default async function AdminLogin({ searchParams: searchParamsPromise }) {
+  const searchParams = await searchParamsPromise;
   return (
     <AuthForm title="Administrator login" action="/api/admin/login" button="Log in"
       error={searchParams.error} notice={searchParams.reset ? 'Password updated. Please log in with your new password.' : ''}

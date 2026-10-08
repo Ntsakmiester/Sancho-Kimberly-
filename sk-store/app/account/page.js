@@ -6,7 +6,8 @@ import { unreadCount } from '../../lib/messages';
 import { PROVINCES } from '../../lib/config';
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'My account | Sancho Kimberly', robots: { index: false, follow: false } };
-export default async function Account({ searchParams: sp }) {
+export default async function Account({ searchParams: spPromise }) {
+  const sp = await spPromise;
   const u = await requirePageRole('customer', '/login');
   const orders = (await pool.query('select ref,status,payment_status,total_cents,created_at from orders where user_id=$1 order by id desc limit 50', [u.id])).rows;
   const addrs = (await pool.query('select * from addresses where user_id=$1 order by id', [u.id])).rows;

@@ -1,7 +1,8 @@
 import { requirePageRole } from '../../../../lib/pageguard';
 import { getSettings } from '../../../../lib/service';
 export const dynamic = 'force-dynamic';
-export default async function Settings({ searchParams }) {
+export default async function Settings({ searchParams: searchParamsPromise }) {
+  const searchParams = await searchParamsPromise;
   await requirePageRole('owner', '/owner/login');
   const s = await getSettings();
   return (<>

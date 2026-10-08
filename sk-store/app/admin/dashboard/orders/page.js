@@ -5,7 +5,8 @@ import { money } from '../../../../lib/format';
 import { STATUSES } from '../../../../lib/orders';
 import { Table, Td, Pager, Flash } from '../../../../components/ui';
 export const dynamic = 'force-dynamic';
-export default async function Orders({ searchParams: sp }) {
+export default async function Orders({ searchParams: spPromise }) {
+  const sp = await spPromise;
   await pagePerm('orders.view');
   const { page, size, offset } = pg(sp); const q = String(sp?.q || '').trim().slice(0, 60); const st = STATUSES.includes(sp?.status) ? sp.status : '';
   const rows = (await pool.query(`select ref,status,payment_status,name,total_cents,created_at,count(*) over()::int total from orders where ($1='' or ref ilike '%'||$1||'%' or email ilike '%'||$1||'%' or name ilike '%'||$1||'%') and ($2='' or status=$2) order by id desc limit $3 offset $4`, [q, st, size, offset])).rows;

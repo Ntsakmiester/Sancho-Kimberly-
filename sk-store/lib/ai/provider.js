@@ -18,7 +18,7 @@ export function providerReady(cfg) {
   if (!cfg.provider) return false;
   if (cfg.provider === 'mock') return process.env.ALLOW_TEST_AI === 'yes_no_real_cost';
   return (cfg.keyCount > 0 && ['openai', 'nvidia', 'gemini', 'anthropic'].includes(cfg.provider))
-    || (cfg.provider === 'nvidia' && geminiBackupKeys().length > 0);
+    || (cfg.provider === 'nvidia' && (cfg.backupKeys || geminiBackupKeys()).length > 0);
 }
 function nextKey(provider, keys) {
   const state = keyState(provider); const now = Date.now();
@@ -114,14 +114,60 @@ export async function complete(cfg, { system, history, userText }) {
   const messages = [...history.map((m) => ({ role: m.role === 'assistant' ? 'assistant' : 'user', content: m.content })), { role: 'user', content: userText }];
   const payload = { system, messages };
   try {
-    const out = await completePool({ ...cfg, provider }, aiKeys(), payload);
+    const out = await completePool({ ...cfg, provider }, cfg.primaryKeys || aiKeys(), payload);
     return { ...out, ms: Date.now() - started };
   } catch (e) {
-    if (provider !== 'nvidia' || !geminiBackupKeys().length) throw e;
+    if (provider !== 'nvidia' || !(cfg.backupKeys || geminiBackupKeys()).length) throw e;
     const backup = { ...cfg, provider: 'gemini', backup: true,
       model: (process.env.GEMINI_MODEL || '').trim() || 'gemini-2.5-flash',
       baseUrl: (process.env.GEMINI_BASE_URL || '').trim() || 'https://generativelanguage.googleapis.com' };
-    const out = await completePool(backup, geminiBackupKeys(), payload);
+    const out = await completePool(backup, cfg.backupKeys || geminiBackupKeys(), payload);
     return { ...out, ms: Date.now() - started };
   }
+}
+
+// Owner-only diagnostics. One request per provider, bypassing cooldowns without changing
+// customer rotation state. Never returns keys, request URLs, headers or raw response JSON.
+function safeDiagnostic(value, cfg = {}) {
+  let text = String(value || '');
+  for (const secret of [...aiKeys(), ...geminiBackupKeys(), ...(cfg.primaryKeys || []), ...(cfg.backupKeys || [])]) {
+    if (secret) { text = text.split(secret).join('[redacted]'); text = text.split(encodeURIComponent(secret)).join('[redacted]'); }
+  }
+  return text.replace(/(nvapi-[A-Za-z0-9_-]+|sk-[A-Za-z0-9_-]+|AIza[0-9A-Za-z_-]+|Bearer\s+\S+)/gi, '[redacted]').slice(0, 1500);
+}
+function defaultModel(provider) {
+  return { nvidia: 'meta/llama-3.1-70b-instruct', openai: 'gpt-4o-mini', gemini: 'gemini-2.0-flash', anthropic: 'claude-3-5-haiku-latest', mock: 'mock' }[provider] || '';
+}
+export async function testProviders(cfg) {
+  const primary = providerName();
+  const plans = [{ ...cfg, provider: primary, model: cfg.model || defaultModel(primary), keys: cfg.primaryKeys || aiKeys() }];
+  if (primary === 'nvidia') plans.push({ ...cfg, provider: 'gemini', backup: true,
+    model: (process.env.GEMINI_MODEL || '').trim() || 'gemini-2.5-flash',
+    baseUrl: (process.env.GEMINI_BASE_URL || '').trim() || 'https://generativelanguage.googleapis.com', keys: cfg.backupKeys || geminiBackupKeys() });
+  const attempts = [];
+  const payload = { system: 'This is a connection test. Reply only OK. Do not include secrets.', messages: [{ role: 'user', content: 'Reply OK.' }] };
+  for (const plan of plans) {
+    const row = { provider: plan.provider || 'not set', model: safeDiagnostic(plan.model, cfg), keyCount: plan.keys.length, ok: false };
+    if (!IMPL[plan.provider] || (plan.provider === 'mock' && process.env.ALLOW_TEST_AI !== 'yes_no_real_cost')) {
+      row.error = 'Provider is not configured or not supported.'; attempts.push(row); continue;
+    }
+    if (!plan.keys.length && plan.provider !== 'mock') { row.error = 'No keys configured for this provider.'; attempts.push(row); continue; }
+    const started = Date.now();
+    try {
+      const r = await IMPL[plan.provider]({ ...plan, maxTokens: plan.backup ? 128 : 32, temperature: 0 }, plan.keys[0] || 'test', payload);
+      row.status = r.status;
+      row.ok = r.status === 200 && !!r.out?.text;
+      if (row.ok) { row.model = safeDiagnostic(r.out.model || plan.model, cfg); row.reply = safeDiagnostic(r.out.text, cfg).slice(0, 200); }
+      else {
+        const error = r.data?.error;
+        row.error = safeDiagnostic(error?.message || (typeof error === 'string' ? error : '') || r.data?.detail || r.data?.message || (r.status === 200 ? 'Provider returned an empty answer.' : 'HTTP ' + r.status + ' (no provider error message).'), cfg);
+      }
+    } catch (e) {
+      row.error = e.name === 'AbortError' ? 'Request timed out after 4500 ms.' : safeDiagnostic(e.cause?.message || e.message || 'Network request failed.', cfg);
+    }
+    row.ms = Date.now() - started;
+    attempts.push(row);
+    if (row.ok) return { ok: true, provider: row.provider, model: row.model, attempts };
+  }
+  return { ok: false, attempts };
 }

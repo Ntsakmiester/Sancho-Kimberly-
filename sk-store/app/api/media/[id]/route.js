@@ -1,6 +1,7 @@
 import pool from '../../../../lib/db';
 export const dynamic = 'force-dynamic';
 export async function GET(_req, { params }) {
+  params = await params;
   const id = parseInt(params.id, 10);
   const m = id ? (await pool.query('select mime,data from media where id=$1', [id])).rows[0] : null;
   if (!m) return new Response('Not found', { status: 404 });

@@ -5,7 +5,9 @@ import { Flash } from '../../../../../components/ui';
 import Confirm from '../../../../../components/Confirm';
 import { rands } from '../../../../../lib/format';
 export const dynamic = 'force-dynamic';
-export default async function EditProduct({ params, searchParams: sp }) {
+export default async function EditProduct({ params: paramsPromise, searchParams: spPromise }) {
+  const params = await paramsPromise;
+  const sp = await spPromise;
   const { perms } = await pagePerm('products.view');
   const id = parseInt(params.id, 10); if (!id) notFound();
   const p = (await pool.query('select * from products where id=$1', [id])).rows[0]; if (!p) notFound();

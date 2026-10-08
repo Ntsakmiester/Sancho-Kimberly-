@@ -4,7 +4,8 @@ import { pagePerm, pg } from '../../../../lib/adminpage';
 import { money } from '../../../../lib/format';
 import { Table, Td, Pager } from '../../../../components/ui';
 export const dynamic = 'force-dynamic';
-export default async function Payments({ searchParams: sp }) {
+export default async function Payments({ searchParams: spPromise }) {
+  const sp = await spPromise;
   await pagePerm('payments.view');
   const { page, size, offset } = pg(sp); const st = ['INITIATED', 'PAID', 'FAILED', 'CANCELLED', 'REFUNDED', 'PARTIALLY_REFUNDED'].includes(sp?.status) ? sp.status : '';
   const rows = (await pool.query(`select p.id,p.provider,p.provider_ref,p.status,p.amount_cents,p.fee_cents,p.paid_at,p.created_at,o.ref,count(*) over()::int total from payments p join orders o on o.id=p.order_id where ($1='' or p.status=$1) order by p.id desc limit $2 offset $3`, [st, size, offset])).rows;

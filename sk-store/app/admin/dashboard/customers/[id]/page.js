@@ -6,7 +6,9 @@ import { money } from '../../../../../lib/format';
 import { Table, Td, Flash } from '../../../../../components/ui';
 import Confirm from '../../../../../components/Confirm';
 export const dynamic = 'force-dynamic';
-export default async function Customer({ params, searchParams: sp }) {
+export default async function Customer({ params: paramsPromise, searchParams: spPromise }) {
+  const params = await paramsPromise;
+  const sp = await spPromise;
   const { user } = await pagePerm('customers.view');
   const id = parseInt(params.id, 10); const c = id ? (await pool.query("select id,name,email,phone,active,created_at from users where id=$1 and role='customer'", [id])).rows[0] : null; if (!c) notFound();
   const orders = (await pool.query('select ref,status,payment_status,total_cents,created_at from orders where user_id=$1 order by id desc limit 50', [id])).rows;

@@ -1,3 +1,4 @@
+import './local-origin.mjs';
 // Run ONLY against an isolated test app/database: BASE=http://localhost:3100 DATABASE_URL=... OWNER_EMAIL=... OWNER_PASSWORD=... ADMIN=admin@sk.test:AdminPass123 STAFF=staff@sk.test:StaffPass123 CUST=c1@sk.test:CustPass12345 CUST2=c2@sk.test:CustPass12345 node tests/messages-filter.test.mjs
 // Sends test messages to the customers in that database. Never run against a live store.
 import pg from 'pg'; import assert from 'node:assert/strict';

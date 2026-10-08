@@ -33,7 +33,7 @@ export const POST = adminPost('ai.tickets', '/admin/dashboard/ai/tickets', async
       const s = (await pool.query("select id from users where id=$1 and role in ('owner','admin','staff') and active", [staffId])).rows[0];
       if (!s) return err('That staff member does not exist.');
       args.push(staffId); sets.push('assigned_staff_id=$' + args.length);
-      if (t.status === 'OPEN' || t.status === 'ESCALATED') sets.push("status='ASSIGNED'");
+      if (!b.status && (t.status === 'OPEN' || t.status === 'ESCALATED')) sets.push("status='ASSIGNED'");
       changes.assigned = staffId;
       if (t.conversation_id) await pool.query('update ai_conversations set assigned_staff_id=$2 where id=$1', [t.conversation_id, staffId]);
     } else { args.push(null); sets.push('assigned_staff_id=$' + args.length); changes.assigned = null; }

@@ -4,7 +4,8 @@ import { dashboardStats } from '../../../lib/finance';
 import { money } from '../../../lib/format';
 import { Stats, Stat, Flash } from '../../../components/ui';
 export const dynamic = 'force-dynamic';
-export default async function AdminHome({ searchParams }) {
+export default async function AdminHome({ searchParams: searchParamsPromise }) {
+  const searchParams = await searchParamsPromise;
   const { perms } = await pagePerm(null);
   const s = await dashboardStats();
   const fin = perms.has('finance.view');

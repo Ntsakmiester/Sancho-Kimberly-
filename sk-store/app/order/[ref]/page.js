@@ -7,7 +7,8 @@ export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Your order | Sancho Kimberly', robots: { index: false, follow: false } };
 const MSG = { PAID: 'Payment confirmed. Thank you!', UNPAID: 'Waiting for payment confirmation from the payment provider.', FAILED: 'Your payment did not go through.', CANCELLED: 'Payment was cancelled.', REFUNDED: 'This order has been refunded.', PARTIALLY_REFUNDED: 'This order has been partly refunded.' };
 // Public page keyed by the unguessable reference: shows status and items only. Delivery address, email and phone are never shown here.
-export default async function OrderPage({ params }) {
+export default async function OrderPage({ params: paramsPromise }) {
+  const params = await paramsPromise;
   const o = (await pool.query('select * from orders where ref=$1', [params.ref])).rows[0];
   if (!o) notFound();
   const items = (await pool.query('select name,size,colour,qty,price_cents from order_items where order_id=$1 order by id', [o.id])).rows;

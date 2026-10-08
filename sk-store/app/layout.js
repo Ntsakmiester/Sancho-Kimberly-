@@ -13,7 +13,7 @@ import pool from '../lib/db';
 export const metadata = { title: 'Sancho Kimberly', description: 'Streetwear from the kasi, delivered nationwide.' };
 export const viewport = { width: 'device-width', initialScale: 1, viewportFit: 'cover' };
 export default async function Root({ children }) {
-  const user = await getUser({ headers: headers() });
+  const user = await getUser({ headers: await headers() });
   const customerSignedIn = user?.role === 'customer';
   const unread = customerSignedIn ? await unreadCount(user.id).catch(() => 0) : 0;
   const menuCats = await pool.query('select name from categories where active order by position,name').then((r) => r.rows.map((x) => x.name)).catch(() => []);
@@ -21,7 +21,7 @@ export default async function Root({ children }) {
     <html lang="en">
       <body><CartProvider>
         <ServiceBanner />
-        <header><div className="wrap">
+        <header className="storefront-header"><div className="wrap">
           <NavDrawer categories={menuCats} signedIn={customerSignedIn} />
           <Link className="logo" href="/"><img className="brandimg" src="/logo-word.png" alt="Sancho Kimberly" /></Link>
           <nav><Link href="/shop">Shop</Link><Link href={customerSignedIn ? '/account' : '/login'} aria-label={customerSignedIn ? 'My account' : 'Customer login'} title={customerSignedIn ? 'My account' : 'Customer login'} style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', minWidth: 24 }}>

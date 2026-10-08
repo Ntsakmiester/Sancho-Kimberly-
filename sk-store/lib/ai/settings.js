@@ -1,13 +1,19 @@
-import pool from '../db';
+import { dashboardKeyPools } from './keys';
 import { getSettings } from '../service';
-// AI assistant configuration. Secret material (API keys) lives ONLY in environment variables;
-// everything here is non-secret and owner-editable from the owner dashboard.
+// Server-only AI configuration. Never serialize this object: it includes decrypted key pools.
+// Client-facing routes must select non-secret fields explicitly.
 let cache = { at: 0, cfg: null };
 export async function aiConfig() {
   if (Date.now() - cache.at < 30000 && cache.cfg) return cache.cfg;
   const s = await getSettings().catch(() => ({}));
   const num = (v, d, min, max) => { const n = parseFloat(v); return Number.isFinite(n) ? Math.min(max, Math.max(min, n)) : d; };
+  const pools = await dashboardKeyPools();
+  const split = (v) => (v || '').split(',').map(x=>x.trim()).filter(Boolean);
+  const provider = (process.env.AI_PROVIDER || '').trim().toLowerCase();
+  const primaryKeys = provider === 'nvidia' && pools.nvidia.length ? pools.nvidia : split(process.env.AI_API_KEYS || process.env.AI_API_KEY);
+  const backupKeys = pools.gemini.length ? pools.gemini : split(process.env.GEMINI_API_KEYS);
   const cfg = {
+    primaryKeys, backupKeys,
     enabled: (s.ai_enabled || 'true') !== 'false',
     name: (s.ai_name || '').trim() || 'Madala',
     greeting: (s.ai_greeting || '').trim() || 'Hi! I can help you find products, track orders and answer questions about the store.',
@@ -23,8 +29,8 @@ export async function aiConfig() {
     conversationMax: Math.round(num(s.ai_conversation_max, 60, 10, 200)),
     proactive: (s.ai_proactive || 'true') !== 'false',
     provider: (process.env.AI_PROVIDER || '').trim().toLowerCase(),
-    backupKeyCount: (process.env.GEMINI_API_KEYS || '').split(',').map((x) => x.trim()).filter(Boolean).length,
-    keyCount: (process.env.AI_API_KEYS || process.env.AI_API_KEY || '').split(',').map((x) => x.trim()).filter(Boolean).length,
+    backupKeyCount: backupKeys.length,
+    keyCount: primaryKeys.length,
   };
   cache = { at: Date.now(), cfg };
   return cfg;

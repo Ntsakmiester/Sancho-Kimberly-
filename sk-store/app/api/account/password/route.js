@@ -1,3 +1,4 @@
+import { requestUrl } from '../../../../lib/request-url';
 import pool from '../../../../lib/db';
 import { customerPost } from '../../../../lib/accountapi';
 import { verifyPassword, hashPassword, destroyUserSessions, createSession, cookieHeader } from '../../../../lib/auth';
@@ -19,5 +20,5 @@ export const POST = customerPost('/account', async ({ req, u, b, ip, err }) => {
   await notify({ type: 'security_alert', userId: u.id, to: row.email, subject: 'Your password was changed', body: `Hi ${row.name || ''},\nThe password on your account was just changed. If this was not you, reset it straight away.` });
   const isForm = (req.headers.get('content-type') || '').includes('urlencoded');
   const h = { 'Set-Cookie': cookieHeader(s.token, s.maxAge) };
-  return isForm ? new Response(null, { status: 303, headers: { ...h, Location: new URL('/account?saved=Password+changed.', req.url).toString() } }) : Response.json({ ok: true }, { headers: h });
+  return isForm ? new Response(null, { status: 303, headers: { ...h, Location: new URL('/account?saved=Password+changed.', requestUrl(req)).toString() } }) : Response.json({ ok: true }, { headers: h });
 });

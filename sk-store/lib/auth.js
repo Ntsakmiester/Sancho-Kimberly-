@@ -1,3 +1,4 @@
+import { validOrigin, rejectOrigin } from './csrf';
 import pool from './db';
 import { hashPassword, verifyPassword, token, sha256 } from './passwords';
 import { audit } from './audit';
@@ -50,6 +51,7 @@ export async function requireRole(req, role) {
   const u = await getUser(req);
   if (!u) return { error: 'unauthenticated', status: 401 };
   if (u.role !== role) return { error: 'forbidden', status: 403 };
+  if (req.method && !['GET', 'HEAD', 'OPTIONS'].includes(req.method) && !validOrigin(req)) return { error: 'invalid_origin', status: 403 };
   return { user: u };
 }
 export { hashPassword, verifyPassword, token, sha256, audit, RESET_MINUTES, MAX_FAILS_EMAIL, MAX_FAILS_IP, WINDOW_MIN };

@@ -2,7 +2,8 @@ import pool from '../../../../../lib/db';
 import { aiPagePerm, AiTabs } from '../../../../../lib/aipage';
 import { Flash } from '../../../../../components/ui';
 export const dynamic = 'force-dynamic';
-export default async function Analytics({ searchParams: sp }) {
+export default async function Analytics({ searchParams: spPromise }) {
+  const sp = await spPromise;
   const { perms } = await aiPagePerm('ai.analytics');
   const one = (sql) => pool.query(sql).then((r) => r.rows[0]).catch(() => ({}));
   const convs = await one(`select

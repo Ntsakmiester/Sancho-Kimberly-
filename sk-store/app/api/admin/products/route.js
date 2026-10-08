@@ -1,3 +1,4 @@
+import { requestUrl } from '../../../../lib/request-url';
 import pool from '../../../../lib/db';
 import { adminPost, int, cents, slugify } from '../../../../lib/adminapi';
 import { requirePerm, deny } from '../../../../lib/perms';
@@ -7,7 +8,7 @@ import { readImage } from '../../../../lib/upload';
 export const dynamic = 'force-dynamic';
 export async function GET(req) {
   const g = await requirePerm(req, 'products.view'); if (!g.user) return deny(g);
-  const u = new URL(req.url); const q = (u.searchParams.get('q') || '').trim(); const page = Math.max(1, int(u.searchParams.get('page'), 1));
+  const u = new URL(requestUrl(req)); const q = (u.searchParams.get('q') || '').trim(); const page = Math.max(1, int(u.searchParams.get('page'), 1));
   const r = await pool.query(`select id,slug,name,category,price_cents,sale_price_cents,active,featured,archived_at,count(*) over() total from products where ($1='' or name ilike '%'||$1||'%' or slug ilike '%'||$1||'%') order by id desc limit 25 offset $2`, [q, (page - 1) * 25]);
   return Response.json({ products: r.rows });
 }

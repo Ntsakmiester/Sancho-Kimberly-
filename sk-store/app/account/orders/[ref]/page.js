@@ -5,7 +5,9 @@ import { requirePageRole } from '../../../../lib/pageguard';
 import { money } from '../../../../lib/format';
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Order | Sancho Kimberly', robots: { index: false, follow: false } };
-export default async function AccountOrder({ params, searchParams: sp }) {
+export default async function AccountOrder({ params: paramsPromise, searchParams: spPromise }) {
+  const params = await paramsPromise;
+  const sp = await spPromise;
   const u = await requirePageRole('customer', '/login');
   const o = (await pool.query('select * from orders where ref=$1 and user_id=$2', [params.ref, u.id])).rows[0];
   if (!o) notFound();

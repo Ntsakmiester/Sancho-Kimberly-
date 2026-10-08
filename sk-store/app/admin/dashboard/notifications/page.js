@@ -2,7 +2,8 @@ import pool from '../../../../lib/db';
 import { pagePerm, pg } from '../../../../lib/adminpage';
 import { Table, Td, Pager, Flash } from '../../../../components/ui';
 export const dynamic = 'force-dynamic';
-export default async function Notifications({ searchParams: sp }) {
+export default async function Notifications({ searchParams: spPromise }) {
+  const sp = await spPromise;
   await pagePerm('notifications.view');
   const { page, size, offset } = pg(sp);
   const rows = (await pool.query("select id,type,subject,body,created_at,read_at,count(*) over()::int total from notifications where audience='admin' order by id desc limit $1 offset $2", [size, offset])).rows;

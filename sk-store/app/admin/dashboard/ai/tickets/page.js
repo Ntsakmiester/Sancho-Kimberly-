@@ -3,7 +3,8 @@ import { aiPagePerm, AiTabs } from '../../../../../lib/aipage';
 import { Flash } from '../../../../../components/ui';
 export const dynamic = 'force-dynamic';
 const STATUSES = ['OPEN', 'AI_HANDLING', 'WAITING_FOR_CUSTOMER', 'ESCALATED', 'ASSIGNED', 'RESOLVED', 'CLOSED'];
-export default async function Tickets({ searchParams: sp }) {
+export default async function Tickets({ searchParams: spPromise }) {
+  const sp = await spPromise;
   const { perms } = await aiPagePerm('ai.tickets');
   const status = STATUSES.includes(sp.status) ? sp.status : '';
   const q = String(sp.q || '').trim().slice(0, 80);

@@ -1,3 +1,4 @@
+import { requestUrl } from '../../../../lib/request-url';
 import pool from '../../../../lib/db';
 import { requireRole, audit, ipOf } from '../../../../lib/auth';
 import { bodyOf } from '../../../../lib/authflow';
@@ -16,5 +17,5 @@ export async function POST(req) {
   const enabled = b.enabled === 'true' || b.enabled === true || b.enabled === 'on';
   await pool.query('update feature_flags set enabled=$1, updated_by=$2, updated_at=now() where key=$3', [enabled, g.user.id, f.key]);
   await audit('FEATURE_FLAG_CHANGED', { accountId: g.user.id, role: 'owner', ip: ipOf(req), record: f.key, entity: 'feature_flag', entityId: f.key, oldValue: { enabled: f.enabled }, newValue: { enabled } });
-  return isForm ? Response.redirect(new URL('/owner/dashboard/flags?saved=1', req.url), 303) : Response.json({ ok: true });
+  return isForm ? Response.redirect(new URL('/owner/dashboard/flags?saved=1', requestUrl(req)), 303) : Response.json({ ok: true });
 }

@@ -1,3 +1,4 @@
+import { requestUrl } from '../../../../../lib/request-url';
 import pool from '../../../../../lib/db';
 import { requirePerm, deny } from '../../../../../lib/perms';
 import { toCsv, csvResponse } from '../../../../../lib/csv';
@@ -14,11 +15,12 @@ const KINDS = {
   finance: { perm: 'finance.view', sql: `select to_char((paid_at at time zone 'Africa/Johannesburg')::date,'YYYY-MM-DD') day, count(*) payments, sum(amount_cents) gross_cents, sum(coalesce(fee_cents,0)) est_fees_cents from payments where status in ('PAID','REFUNDED','PARTIALLY_REFUNDED') and paid_at >= $1 and paid_at < $2 group by 1 order by 1` },
 };
 export async function GET(req, { params }) {
+  params = await params;
   const k = KINDS[params.kind];
   if (!k) return Response.json({ error: 'Unknown export.' }, { status: 404 });
   const g = await requirePerm(req, k.perm); if (!g.user) return deny(g);
   if (!g.perms.has('reports.view') && !['owner', 'admin'].includes(g.user.role)) return Response.json({ error: 'Forbidden.' }, { status: 403 });
-  const sp = Object.fromEntries(new URL(req.url).searchParams); const r = rangeOf({ range: sp.range || 'custom', from: sp.from || '2000-01-01', to: sp.to || '2999-12-31' });
+  const sp = Object.fromEntries(new URL(requestUrl(req)).searchParams); const r = rangeOf({ range: sp.range || 'custom', from: sp.from || '2000-01-01', to: sp.to || '2999-12-31' });
   const rows = (await pool.query(k.sql, [r.start, r.end])).rows;
   await audit('DATA_EXPORTED', { accountId: g.user.id, role: g.user.role, ip: g.ip, record: params.kind, entity: 'export', newValue: { rows: rows.length } });
   const cols = rows.length ? Object.keys(rows[0]).filter((c) => !['from_', 'to_'].includes(c)) : [];

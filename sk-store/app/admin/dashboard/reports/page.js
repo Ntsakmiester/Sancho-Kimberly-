@@ -3,7 +3,8 @@ import { rangeOf, summary, bestSellers, categorySales, customerStats, trend } fr
 import { money } from '../../../../lib/format';
 import { Stats, Stat, Table, Td, RangeBar } from '../../../../components/ui';
 export const dynamic = 'force-dynamic';
-export default async function Reports({ searchParams: sp }) {
+export default async function Reports({ searchParams: spPromise }) {
+  const sp = await spPromise;
   await pagePerm('reports.view');
   const r = rangeOf(sp); const [s, best, cats, cs, t] = await Promise.all([summary(r), bestSellers(r), categorySales(r), customerStats(r), trend(r)]);
   return (

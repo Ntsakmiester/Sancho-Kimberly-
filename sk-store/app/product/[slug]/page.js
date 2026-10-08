@@ -7,17 +7,20 @@ import { getUser } from '../../../lib/auth';
 import { flag } from '../../../lib/flags';
 import ProductView from '../../../components/ProductView';
 export const dynamic = 'force-dynamic';
-export async function generateMetadata({ params }) {
+export async function generateMetadata({ params: paramsPromise }) {
+  const params = await paramsPromise;
   const p = await getProduct(params.slug);
   if (!p) return { title: 'Not found | Sancho Kimberly' };
   const title = p.meta_title || `${p.name} | Sancho Kimberly`; const desc = p.meta_description || String(p.description || '').slice(0, 155);
   return { title, description: desc, alternates: { canonical: `/product/${p.slug}` }, openGraph: { title, description: desc, type: 'website', images: p.images[0] ? [p.images[0].url] : [] } };
 }
 const Stars = ({ n }) => <span aria-label={`${n} out of 5`}>{'\u2605'.repeat(n)}{'\u2606'.repeat(5 - n)}</span>;
-export default async function ProductPage({ params, searchParams }) {
+export default async function ProductPage({ params: paramsPromise, searchParams: searchParamsPromise }) {
+  const params = await paramsPromise;
+  const searchParams = await searchParamsPromise;
   const p = await getProduct(params.slug);
   if (!p) notFound();
-  const jar = cookies(); const user = await getUser({ headers: { get: (k) => (k === 'cookie' ? jar.toString() : null) } });
+  const jar = await cookies(); const user = await getUser({ headers: { get: (k) => (k === 'cookie' ? jar.toString() : null) } });
   const reviewsOn = await flag('reviews');
   const reviews = (await pool.query("select r.rating,r.title,r.body,r.verified,r.created_at,coalesce(nullif(split_part(u.name,' ',1),''),'Customer') who from reviews r join users u on u.id=r.user_id where r.product_id=$1 and r.status='APPROVED' order by r.id desc limit 30", [p.id])).rows;
   const dist = (await pool.query("select rating,count(*)::int c from reviews where product_id=$1 and status='APPROVED' group by rating", [p.id])).rows;

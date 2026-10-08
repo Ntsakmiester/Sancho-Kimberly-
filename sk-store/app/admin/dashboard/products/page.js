@@ -5,7 +5,8 @@ import { pagePerm, pg } from '../../../../lib/adminpage';
 import { money } from '../../../../lib/format';
 import { Table, Td, Pager, Flash } from '../../../../components/ui';
 export const dynamic = 'force-dynamic';
-export default async function Products({ searchParams: sp }) {
+export default async function Products({ searchParams: spPromise }) {
+  const sp = await spPromise;
   const { perms } = await pagePerm('products.view');
   const { page, size, offset } = pg(sp); const q = String(sp?.q || '').trim().slice(0, 60); const arch = sp?.archived === '1';
   const rows = (await pool.query(`select p.id,p.name,p.category,p.price_cents,p.sale_price_cents,p.active,p.archived_at,(select coalesce(sum(qty),0)::int from variants v where v.product_id=p.id) stock,count(*) over()::int total from products p
@@ -23,7 +24,7 @@ export default async function Products({ searchParams: sp }) {
         <form method="post" action="/api/admin/categories" className="office-form" style={{ marginTop: 20, maxWidth: 620 }}>
           <h3>Add a category</h3><input type="hidden" name="action" value="create" />
           <input name="name" placeholder="e.g. Hoodies" required maxLength={60} aria-label="Category name" /> <button className="btn">Add category</button>
-          <p className="low" style={{ margin: '6px 0 0' }}>New categories appear in the Category list above and in the shop filters.</p>
+          <p className="low" style={{ margin: '6px 0 0' }}>New categories appear in the Category list below and in the shop filters.</p>
         </form>
       )}
       {perms.has('products.create') && (

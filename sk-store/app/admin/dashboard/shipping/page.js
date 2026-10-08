@@ -4,7 +4,8 @@ import { PROVINCES } from '../../../../lib/config';
 import { Table, Td, Flash } from '../../../../components/ui';
 import { money, rands } from '../../../../lib/format';
 export const dynamic = 'force-dynamic';
-export default async function Shipping({ searchParams: sp }) {
+export default async function Shipping({ searchParams: spPromise }) {
+  const sp = await spPromise;
   await pagePerm('shipping.manage');
   const rows = (await pool.query('select * from shipping_rates order by id')).rows;
   const F = ({ r }) => (

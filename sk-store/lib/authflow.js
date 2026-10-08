@@ -1,3 +1,5 @@
+import { requestUrl } from './request-url';
+import { verifyOwnerMfa } from './totp';
 import pool from './db';
 import { hashPassword, verifyPassword, token, sha256 } from './passwords';
 import { audit } from './audit';
@@ -13,7 +15,7 @@ const DUMMY = hashPassword('timing-equaliser'); // so unknown emails cost the sa
 // HTML form posts get redirects back to the right page; fetch/XHR gets JSON.
 const wantsRedirect = (req) => (req.headers.get('content-type') || '').includes('application/x-www-form-urlencoded');
 const fail = (req, msg, status, back) =>
-  wantsRedirect(req) ? Response.redirect(new URL(back + '?error=' + encodeURIComponent(msg), req.url), 303) : json({ error: msg }, status);
+  wantsRedirect(req) ? Response.redirect(new URL(back + '?error=' + encodeURIComponent(msg), requestUrl(req)), 303) : json({ error: msg }, status);
 
 export async function bodyOf(req) {
   const ct = req.headers.get('content-type') || '';
@@ -43,6 +45,7 @@ export function loginHandler(roleSpec, { back, next }) {
       await audit(`${label(roleSpec)}_LOGIN`, { record: email, ip, result: 'denied: ' + why });
       return fail(req, 'Invalid email or password.', 401, back);
     };
+    if (password.length > 200) return fail(req, 'Password is too long.', 400, back);
     if (!email || !password) return fail(req, 'Enter your email and password.', 400, back);
     if (await tooManyAttempts(email, ip)) {
       await audit(`${label(roleSpec)}_LOGIN`, { record: email, ip, result: 'rate_limited' });
@@ -51,10 +54,11 @@ export function loginHandler(roleSpec, { back, next }) {
     const u = (await pool.query('select * from users where email=$1', [email])).rows[0];
     const okPw = verifyPassword(password, u ? u.password_hash : DUMMY);
     if (!u || !roles.includes(u.role) || !u.active || !okPw) return bad(!u ? 'no_account' : !roles.includes(u.role) ? 'wrong_role' : !u.active ? 'disabled' : 'bad_password');
+    if (u.role === 'owner' && u.totp_enabled && !(await verifyOwnerMfa(u.id, String(b.code || '').trim()))) return bad('mfa_required_or_invalid');
     await pool.query('insert into login_attempts(email,ip,success) values($1,$2,true)', [email, ip]);
     const s = await createSession(u.id, req);
     await audit(`${label(roleSpec)}_LOGIN`, { accountId: u.id, record: email, ip });
-    const dest = new URL(next, req.url);
+    const dest = new URL(next, requestUrl(req));
     return wantsRedirect(req)
       ? new Response(null, { status: 303, headers: { Location: dest.toString(), 'Set-Cookie': cookieHeader(s.token, s.maxAge) } })
       : json({ ok: true, role: u.role }, 200, { 'Set-Cookie': cookieHeader(s.token, s.maxAge) });
@@ -68,7 +72,7 @@ export function logoutHandler(role, { back }) {
     await destroySession(req);
     if (u) await audit(`${(role || u.role).toUpperCase()}_LOGOUT`, { accountId: u.id, ip: ipOf(req) });
     return wantsRedirect(req)
-      ? new Response(null, { status: 303, headers: { Location: new URL(back, req.url).toString(), 'Set-Cookie': clearCookieHeader() } })
+      ? new Response(null, { status: 303, headers: { Location: new URL(back, requestUrl(req)).toString(), 'Set-Cookie': clearCookieHeader() } })
       : json({ ok: true }, 200, { 'Set-Cookie': clearCookieHeader() });
   };
 }
@@ -77,7 +81,7 @@ export function logoutHandler(role, { back }) {
 export function baseUrl(req) {
   if (process.env.APP_BASE_URL) return process.env.APP_BASE_URL.replace(/\/$/, '');
   if (process.env.VERCEL_PROJECT_PRODUCTION_URL) return 'https://' + process.env.VERCEL_PROJECT_PRODUCTION_URL;
-  return process.env.NODE_ENV === 'production' ? null : new URL(req.url).origin;
+  return process.env.NODE_ENV === 'production' ? null : new URL(requestUrl(req)).origin;
 }
 // Creates a single-use, 30-minute token (stored only as a hash) and emails the link. Used for resets and invitations.
 export async function issueReset(u, req, { resetPath, invite = false }) {
@@ -112,7 +116,7 @@ export function forgotHandler(roleSpec, { back, resetPath }) {
     await audit(`${label(roleSpec)}_PASSWORD_RESET`, { accountId: u ? u.id : null, record: u ? (sent ? 'requested' : 'requested (not sent)') : 'requested (no such account)', ip, result: u ? 'ok' : 'no_account' });
     const wait = 800 - (Date.now() - t0); // even out response time whether or not an email was sent
     if (wait > 0) await sleep(wait);
-    return wantsRedirect(req) ? Response.redirect(new URL(back + '?sent=1', req.url), 303) : json({ message: GENERIC });
+    return wantsRedirect(req) ? Response.redirect(new URL(back + '?sent=1', requestUrl(req)), 303) : json({ message: GENERIC });
   };
 }
 
@@ -152,6 +156,6 @@ export function resetHandler(roleSpec, { back, loginPath }) {
       return fail(req, 'Something went wrong. Please try again.', 500, back);
     } finally { client.release(); }
     await audit(`${label(roleSpec)}_PASSWORD_RESET`, { accountId: uid, record: 'completed', ip });
-    return wantsRedirect(req) ? Response.redirect(new URL(loginPath + '?reset=1', req.url), 303) : json({ ok: true, message: 'Password updated. Please log in again.' });
+    return wantsRedirect(req) ? Response.redirect(new URL(loginPath + '?reset=1', requestUrl(req)), 303) : json({ ok: true, message: 'Password updated. Please log in again.' });
   };
 }

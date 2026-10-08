@@ -4,7 +4,9 @@ import { provider } from '../../../../lib/payments';
 import { price } from '../../../../lib/format';
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Test payment', robots: { index: false } };
-export default async function MockPay({ params, searchParams }) {
+export default async function MockPay({ params: paramsPromise, searchParams: searchParamsPromise }) {
+  const params = await paramsPromise;
+  const searchParams = await searchParamsPromise;
   if (provider() !== 'mock') notFound();
   const pid = parseInt(searchParams?.p, 10);
   const r = (await pool.query('select p.id,p.amount_cents,o.ref from payments p join orders o on o.id=p.order_id where p.id=$1 and o.ref=$2', [pid, params.ref])).rows[0];
