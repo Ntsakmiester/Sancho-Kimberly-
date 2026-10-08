@@ -2,7 +2,13 @@
 // implementation and AI_API_KEYS holds one or more comma-separated keys used with bounded
 // failover (a key that rate-limits or errors is cooled down, never retried in a hot loop).
 // Keys live only in environment variables and are never logged, stored or sent to the browser.
-const state = globalThis.__aiKeyState || (globalThis.__aiKeyState = { i: 0, cool: new Map() });
+const states = globalThis.__aiProviderStates || (globalThis.__aiProviderStates = new Map());
+const splitKeys = (value) => (value || '').split(',').map((x) => x.trim()).filter(Boolean);
+export function geminiBackupKeys() { return splitKeys(process.env.GEMINI_API_KEYS); }
+function keyState(provider) {
+  if (!states.has(provider)) states.set(provider, { i: 0, cool: new Map() });
+  return states.get(provider);
+}
 
 export function aiKeys() {
   return (process.env.AI_API_KEYS || process.env.AI_API_KEY || '').split(',').map((x) => x.trim()).filter(Boolean);
@@ -11,21 +17,22 @@ export function providerName() { return (process.env.AI_PROVIDER || '').trim().t
 export function providerReady(cfg) {
   if (!cfg.provider) return false;
   if (cfg.provider === 'mock') return process.env.ALLOW_TEST_AI === 'yes_no_real_cost';
-  return cfg.keyCount > 0 && ['openai', 'nvidia', 'gemini', 'anthropic'].includes(cfg.provider);
+  return (cfg.keyCount > 0 && ['openai', 'nvidia', 'gemini', 'anthropic'].includes(cfg.provider))
+    || (cfg.provider === 'nvidia' && geminiBackupKeys().length > 0);
 }
-function nextKey() {
-  const keys = aiKeys(); const now = Date.now();
+function nextKey(provider, keys) {
+  const state = keyState(provider); const now = Date.now();
   for (let n = 0; n < keys.length; n++) {
     const idx = (state.i + n) % keys.length;
     if ((state.cool.get(keys[idx]) || 0) <= now) { state.i = idx + 1; return keys[idx]; }
   }
   return null;
 }
-const coolDown = (key, ms) => state.cool.set(key, Date.now() + ms);
+const coolDown = (provider, key, ms) => keyState(provider).cool.set(key, Date.now() + ms);
 
 export class ProviderUnavailable extends Error { constructor(m) { super(m); this.unavailable = true; } }
 
-async function callHttp(url, { method = 'POST', headers = {}, body }, timeoutMs) {
+async function callHttp(url, { method = 'POST', headers = {}, body }, timeoutMs = 4500) {
   const ctrl = new AbortController();
   const t = setTimeout(() => ctrl.abort(), timeoutMs);
   try {
@@ -51,14 +58,14 @@ async function openai(cfg, key, payload) {
   return { ...r, out: { text: String(c || '').trim(), tokensIn: r.data?.usage?.prompt_tokens || 0, tokensOut: r.data?.usage?.completion_tokens || 0, model: r.data?.model || cfg.model } };
 }
 async function gemini(cfg, key, payload) {
-  const base = (process.env.AI_BASE_URL || 'https://generativelanguage.googleapis.com').replace(/\/$/, '');
+  const base = (cfg.baseUrl || process.env.AI_BASE_URL || 'https://generativelanguage.googleapis.com').replace(/\/$/, '');
   const model = cfg.model || 'gemini-2.0-flash';
   const r = await callHttp(`${base}/v1beta/models/${model}:generateContent?key=${encodeURIComponent(key)}`, {
     headers: { 'content-type': 'application/json' },
     body: {
       system_instruction: { parts: [{ text: payload.system }] },
       contents: payload.messages.map((m) => ({ role: m.role === 'assistant' ? 'model' : 'user', parts: [{ text: m.content }] })),
-      generationConfig: { maxOutputTokens: cfg.maxTokens, temperature: cfg.temperature },
+      generationConfig: { maxOutputTokens: cfg.maxTokens, temperature: cfg.temperature, ...(cfg.backup && model === 'gemini-2.5-flash' ? { thinkingConfig: { thinkingBudget: 0 } } : {}) },
     },
   }, cfg.timeoutMs);
   if (r.status !== 200) return r;
@@ -80,24 +87,41 @@ async function mock(cfg, _key, payload) {
 }
 const IMPL = { openai, nvidia: openai, gemini, anthropic, mock };
 
-// One completion with bounded key failover. Throws ProviderUnavailable when nothing works.
-export async function complete(cfg, { system, history, userText }) {
-  const impl = IMPL[providerName()];
-  if (!impl || !providerReady(cfg)) throw new ProviderUnavailable('AI provider is not configured.');
-  const messages = [...history.map((m) => ({ role: m.role === 'assistant' ? 'assistant' : 'user', content: m.content })), { role: 'user', content: userText }];
-  const attempts = providerName() === 'mock' ? 1 : Math.min(Math.max(aiKeys().length, 1), 2);
+// Each provider has its own key pool and cooldown state. NVIDIA stays first on every
+// request; only after its bounded attempts fail do we try the configured Gemini backup.
+async function completePool(cfg, keys, payload) {
+  const provider = cfg.provider;
+  const impl = IMPL[provider];
+  const attempts = provider === 'mock' ? 1 : Math.min(keys.length, 2);
   let lastErr = 'unavailable';
   for (let a = 0; a < attempts; a++) {
-    const key = providerName() === 'mock' ? 'test' : nextKey();
+    const key = provider === 'mock' ? 'test' : nextKey(provider, keys);
     if (!key) break;
-    const started = Date.now();
     let r;
-    try { r = await impl(cfg, key, { system, messages }); }
-    catch (e) { coolDown(key, 30000); lastErr = e.name === 'AbortError' ? 'timeout' : 'network'; continue; }
-    if (r.status === 200 && r.out?.text) return { ...r.out, ms: Date.now() - started };
-    if (RETRYABLE(r.status)) { coolDown(key, 60000); lastErr = 'http ' + r.status; continue; }
-    if (KEY_BAD(r.status)) { coolDown(key, 10 * 60000); lastErr = 'key rejected'; continue; }
-    lastErr = 'http ' + r.status; break; // 4xx request problem: retrying another key won't help
+    try { r = await impl(cfg, key, payload); }
+    catch (e) { coolDown(provider, key, 30000); lastErr = e.name === 'AbortError' ? 'timeout' : 'network'; continue; }
+    if (r.status === 200 && r.out?.text) return { ...r.out, provider };
+    if (RETRYABLE(r.status)) { coolDown(provider, key, 60000); lastErr = 'http ' + r.status; continue; }
+    if (KEY_BAD(r.status)) { coolDown(provider, key, 10 * 60000); lastErr = 'key rejected'; continue; }
+    lastErr = 'http ' + r.status; break;
   }
   throw new ProviderUnavailable('AI provider request failed: ' + lastErr);
+}
+export async function complete(cfg, { system, history, userText }) {
+  const provider = providerName();
+  if (!IMPL[provider] || !providerReady(cfg)) throw new ProviderUnavailable('AI provider is not configured.');
+  const started = Date.now();
+  const messages = [...history.map((m) => ({ role: m.role === 'assistant' ? 'assistant' : 'user', content: m.content })), { role: 'user', content: userText }];
+  const payload = { system, messages };
+  try {
+    const out = await completePool({ ...cfg, provider }, aiKeys(), payload);
+    return { ...out, ms: Date.now() - started };
+  } catch (e) {
+    if (provider !== 'nvidia' || !geminiBackupKeys().length) throw e;
+    const backup = { ...cfg, provider: 'gemini', backup: true,
+      model: (process.env.GEMINI_MODEL || '').trim() || 'gemini-2.5-flash',
+      baseUrl: (process.env.GEMINI_BASE_URL || '').trim() || 'https://generativelanguage.googleapis.com' };
+    const out = await completePool(backup, geminiBackupKeys(), payload);
+    return { ...out, ms: Date.now() - started };
+  }
 }

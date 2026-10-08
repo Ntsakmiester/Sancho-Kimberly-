@@ -16,6 +16,7 @@ export default async function OwnerAi({ searchParams: sp }) {
       Provider: <strong>{cfg.provider || 'not set'}</strong> · API keys configured: <strong>{cfg.keyCount}</strong> · Mode right now: <strong>{ready ? 'AI answers' : 'fixed answers (no working provider)'}</strong>.
       {cfg.provider && cfg.keyCount === 0 && <> Add at least one key to the <code>AI_API_KEYS</code> environment variable on your host - keys never live in this dashboard or the database.</>}
       {!cfg.provider && <> Set <code>AI_PROVIDER</code> (openai, nvidia, gemini or anthropic) and <code>AI_API_KEYS</code> in your hosting environment to turn on full AI answers. Until then the assistant uses its fixed store answers at no cost.</>}
+      {cfg.provider === 'nvidia' && <> Gemini backup keys configured: <strong>{cfg.backupKeyCount}</strong>. Add Google keys to <code>GEMINI_API_KEYS</code> (comma-separated) on your host for automatic backup. NVIDIA stays primary; <code>GEMINI_MODEL</code> and <code>GEMINI_BASE_URL</code> control only the backup.</>}
     </p>
     <form method="post" action="/api/owner/ai" className="office-form" style={{ maxWidth: 620 }}>
       <label className="label"><input type="checkbox" name="ai_enabled" value="true" defaultChecked={(s.ai_enabled || 'true') !== 'false'} /> Assistant enabled</label>

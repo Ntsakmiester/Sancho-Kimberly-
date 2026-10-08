@@ -9,7 +9,7 @@ export async function GET(req) {
   const g = await requireRole(req, 'owner');
   if (!g.user) return Response.json({ error: 'Forbidden.' }, { status: 403 });
   const cfg = await aiConfig();
-  return Response.json({ enabled: cfg.enabled, provider: cfg.provider || null, keys_configured: cfg.keyCount, model: cfg.model || null, provider_ready: providerReady(cfg) });
+  return Response.json({ enabled: cfg.enabled, provider: cfg.provider || null, keys_configured: cfg.keyCount, backup_provider: cfg.provider === 'nvidia' ? 'gemini' : null, backup_keys_configured: cfg.provider === 'nvidia' ? cfg.backupKeyCount : 0, model: cfg.model || null, provider_ready: providerReady(cfg) });
 }
 export async function POST(req) {
   const g = await requireRole(req, 'owner');

@@ -173,7 +173,7 @@ export async function respond({ user, ip, guestKey, conversationId, text, client
       const out = await complete(cfg, { system, history: history.slice(0, -1), userText: text });
       reply = out.text; mode = 'ai'; tokensIn = out.tokensIn; tokensOut = out.tokensOut;
       await pool.query('insert into ai_usage(conversation_id,user_id,provider,model,tokens_in,tokens_out,ms,ok) values($1,$2,$3,$4,$5,$6,$7,true)',
-        [conv.id, user?.id || null, (process.env.AI_PROVIDER || '').toLowerCase(), out.model || cfg.model || '', tokensIn || 0, tokensOut || 0, out.ms || 0]);
+        [conv.id, user?.id || null, out.provider || (process.env.AI_PROVIDER || '').toLowerCase(), out.model || cfg.model || '', tokensIn || 0, tokensOut || 0, out.ms || 0]);
     } catch (e) {
       await pool.query('insert into ai_usage(conversation_id,user_id,provider,model,ms,ok) values($1,$2,$3,$4,$5,false)',
         [conv.id, user?.id || null, (process.env.AI_PROVIDER || '').toLowerCase(), cfg.model || '', Date.now() - started]).catch(() => {});

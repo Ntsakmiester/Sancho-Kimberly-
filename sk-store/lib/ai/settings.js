@@ -23,6 +23,7 @@ export async function aiConfig() {
     conversationMax: Math.round(num(s.ai_conversation_max, 60, 10, 200)),
     proactive: (s.ai_proactive || 'true') !== 'false',
     provider: (process.env.AI_PROVIDER || '').trim().toLowerCase(),
+    backupKeyCount: (process.env.GEMINI_API_KEYS || '').split(',').map((x) => x.trim()).filter(Boolean).length,
     keyCount: (process.env.AI_API_KEYS || process.env.AI_API_KEY || '').split(',').map((x) => x.trim()).filter(Boolean).length,
   };
   cache = { at: Date.now(), cfg };
