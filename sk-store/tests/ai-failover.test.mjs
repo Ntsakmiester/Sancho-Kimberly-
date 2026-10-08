@@ -28,7 +28,7 @@ async function scenario(name,primaryStatus,backupStatus=200){
 await scenario('healthy NVIDIA never contacts backup',200);
 for(const status of [429,500,401,403,400,'network','timeout']) await scenario('NVIDIA '+status+' switches to Gemini',status);
 const all=await scenario('both pools fail -> exception for fixed-answer fallback',429,429);assert.equal(all.length,4);
-assert.notEqual(all[0].opts.headers.authorization,all[1].opts.headers.authorization);assert.notEqual(all[2].url,all[3].url);
+assert.notEqual(all[0].opts.headers.authorization,all[1].opts.headers.authorization);assert.notEqual(all[2].opts.headers['x-goog-api-key'],all[3].opts.headers['x-goog-api-key']);
 // Exhausted pools stay cooled down: no hot retry loop.
 let calls=0;globalThis.fetch=async()=>{calls++;return success()};await assert.rejects(complete(cfg,input));assert.equal(calls,0);count++;console.log('PASS independent pool cooldowns');
 process.env.AI_API_KEYS='';process.env.GEMINI_API_KEYS='fresh-backup';assert.equal(providerReady({...cfg,keyCount:0}),true);

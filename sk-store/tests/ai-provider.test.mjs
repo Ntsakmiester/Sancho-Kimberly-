@@ -13,13 +13,13 @@ let calls = [];
 globalThis.fetch = async (url, options) => {
   calls.push({ url, ...options, body: JSON.parse(options.body) });
   if (calls.length === 1) return { status: 429, text: async () => '{}' };
-  return { status: 200, text: async () => JSON.stringify({choices:[{message:{content:'Verified answer'}}],usage:{prompt_tokens:12,completion_tokens:5},model:'meta/llama-3.1-70b-instruct'}) };
+  return { status: 200, text: async () => JSON.stringify({choices:[{message:{content:'Verified answer'}}],usage:{prompt_tokens:12,completion_tokens:5},model:'nvidia/nemotron-3-super-120b-a12b'}) };
 };
 const out = await complete(cfg, input);
 assert.equal(out.text, 'Verified answer'); assert.equal(out.tokensIn, 12); assert.equal(out.tokensOut, 5); passed++;
 assert.equal(calls.length, 2); assert.notEqual(calls[0].headers.authorization, calls[1].headers.authorization); passed++;
 assert.equal(calls[0].url, 'https://integrate.api.nvidia.com/v1/chat/completions'); passed++;
-assert.equal(calls[0].body.model, 'meta/llama-3.1-70b-instruct');
+assert.equal(calls[0].body.model, 'nvidia/nemotron-3-super-120b-a12b');
 assert.deepEqual(calls[0].body.messages[0], {role:'system',content: input.system}); passed++;
 for (const base of ['http://localhost:1234', 'http://localhost:1234/v1/']) {
   process.env.AI_BASE_URL = base; process.env.AI_API_KEYS = 'fake-new-' + passed; calls = [];

@@ -31,7 +31,8 @@ export default async function OwnerAi({ searchParams: spPromise }) {
       <label className="label">Tone<input name="ai_tone" maxLength="120" defaultValue={s.ai_tone || 'professional, friendly and concise'} /></label>
       <label className="label">Personality notes<textarea name="ai_personality" rows="2" maxLength="500" defaultValue={s.ai_personality || ''} /></label>
       <label className="label">Escalation rules<textarea name="ai_escalation_rules" rows="2" maxLength="500" defaultValue={s.ai_escalation_rules || ''} placeholder="e.g. Always escalate refund disputes to a human" /></label>
-      <label className="label">Model (optional - the provider default is used when blank)<input name="ai_model" maxLength="80" defaultValue={s.ai_model || ''} /></label>
+      <p className="low">NVIDIA default: nvidia/nemotron-3-super-120b-a12b. If an old model is saved here or in AI_MODEL, update it too. Hosted model availability can change; use Test AI after saving.</p>
+      <label className="label">Model (optional - provider default when blank; AI_MODEL in Vercel takes priority)<input name="ai_model" placeholder="nvidia/nemotron-3-super-120b-a12b" maxLength="80" defaultValue={s.ai_model || ''} /></label>
       <label className="label">Creativity / temperature (0 to 1)<input name="ai_temperature" inputMode="decimal" defaultValue={s.ai_temperature || '0.4'} /></label>
       <label className="label">Max answer length (tokens)<input name="ai_max_tokens" inputMode="numeric" defaultValue={s.ai_max_tokens || '600'} /></label>
       <label className="label">Messages per minute per customer<input name="ai_rate_per_min" inputMode="numeric" defaultValue={s.ai_rate_per_min || '12'} /></label>

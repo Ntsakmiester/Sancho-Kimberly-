@@ -14,11 +14,12 @@ export async function dashboardKeyPools() {
   catch { /* Environment keys remain available if encrypted storage is unavailable. */ }
   return result;
 }
+export const validProviderKey = (provider, key) => provider === 'nvidia' ? /^nvapi-[A-Za-z0-9_-]{20,500}$/.test(key) : provider === 'gemini' && /^(?:AIza[A-Za-z0-9_-]{20,500}|AQ\.[A-Za-z0-9._-]{20,2000})$/.test(key);
 export async function addDashboardKeys(provider, raw) {
  if (!['nvidia','gemini'].includes(provider)) throw new Error('Choose NVIDIA or Gemini.');
  const values=String(raw||'').split(',').map(x=>x.trim()).filter(Boolean);
  if(!values.length || values.length>10) throw new Error('Enter between 1 and 10 comma-separated keys.');
- for(const key of values) if(!(provider==='nvidia'?/^nvapi-[A-Za-z0-9_-]{20,500}$/:/^AIza[A-Za-z0-9_-]{20,500}$/).test(key)) throw new Error('That key format does not match the selected provider.');
+ for(const key of values) if (!validProviderKey(provider, key)) throw new Error(provider === 'gemini' ? 'Enter the full Google AI Studio key (standard AIza or auth AQ. format), without quotes or a Bearer prefix.' : 'Enter a full NVIDIA key starting with nvapi-.');
  encryptionKey();
  const c=await pool.connect();try{await c.query('begin');for(const key of values) await c.query('insert into ai_provider_keys(provider,encrypted_value,last4,fingerprint) values($1,$2,$3,$4) on conflict do nothing',[provider,encryptKey(key),key.slice(-4),crypto.createHash('sha256').update(key).digest('hex')]);await c.query('commit');}catch{await c.query('rollback');throw new Error('Could not save keys. Please try again.');}finally{c.release();}
 }

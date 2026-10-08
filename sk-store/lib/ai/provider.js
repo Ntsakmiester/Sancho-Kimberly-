@@ -51,7 +51,7 @@ async function openai(cfg, key, payload) {
   const endpoint = base.endsWith('/v1') ? base + '/chat/completions' : base + '/v1/chat/completions';
   const r = await callHttp(endpoint, {
     headers: { 'content-type': 'application/json', authorization: 'Bearer ' + key },
-    body: { model: cfg.model || (nvidia ? 'meta/llama-3.1-70b-instruct' : 'gpt-4o-mini'), messages: [{ role: 'system', content: payload.system }, ...payload.messages], max_tokens: cfg.maxTokens, temperature: cfg.temperature },
+    body: { model: cfg.model || (nvidia ? 'nvidia/nemotron-3-super-120b-a12b' : 'gpt-4o-mini'), messages: [{ role: 'system', content: payload.system }, ...payload.messages], max_tokens: cfg.maxTokens, temperature: cfg.temperature, ...(nvidia && (cfg.model || 'nvidia/nemotron-3-super-120b-a12b') === 'nvidia/nemotron-3-super-120b-a12b' ? { chat_template_kwargs: { enable_thinking: false } } : {}) },
   }, cfg.timeoutMs);
   if (r.status !== 200) return r;
   const c = r.data?.choices?.[0]?.message?.content;
@@ -59,9 +59,9 @@ async function openai(cfg, key, payload) {
 }
 async function gemini(cfg, key, payload) {
   const base = (cfg.baseUrl || process.env.AI_BASE_URL || 'https://generativelanguage.googleapis.com').replace(/\/$/, '');
-  const model = cfg.model || 'gemini-2.0-flash';
-  const r = await callHttp(`${base}/v1beta/models/${model}:generateContent?key=${encodeURIComponent(key)}`, {
-    headers: { 'content-type': 'application/json' },
+  const model = cfg.model || 'gemini-2.5-flash';
+  const r = await callHttp(`${base}/v1beta/models/${model}:generateContent`, {
+    headers: { 'content-type': 'application/json', 'x-goog-api-key': key },
     body: {
       system_instruction: { parts: [{ text: payload.system }] },
       contents: payload.messages.map((m) => ({ role: m.role === 'assistant' ? 'model' : 'user', parts: [{ text: m.content }] })),
@@ -133,10 +133,10 @@ function safeDiagnostic(value, cfg = {}) {
   for (const secret of [...aiKeys(), ...geminiBackupKeys(), ...(cfg.primaryKeys || []), ...(cfg.backupKeys || [])]) {
     if (secret) { text = text.split(secret).join('[redacted]'); text = text.split(encodeURIComponent(secret)).join('[redacted]'); }
   }
-  return text.replace(/(nvapi-[A-Za-z0-9_-]+|sk-[A-Za-z0-9_-]+|AIza[0-9A-Za-z_-]+|Bearer\s+\S+)/gi, '[redacted]').slice(0, 1500);
+  return text.replace(/(nvapi-[A-Za-z0-9_-]+|sk-[A-Za-z0-9_-]+|AIza[0-9A-Za-z_-]+|AQ\.[0-9A-Za-z._-]+|Bearer\s+\S+)/gi, '[redacted]').slice(0, 1500);
 }
 function defaultModel(provider) {
-  return { nvidia: 'meta/llama-3.1-70b-instruct', openai: 'gpt-4o-mini', gemini: 'gemini-2.0-flash', anthropic: 'claude-3-5-haiku-latest', mock: 'mock' }[provider] || '';
+  return { nvidia: 'nvidia/nemotron-3-super-120b-a12b', openai: 'gpt-4o-mini', gemini: 'gemini-2.5-flash', anthropic: 'claude-3-5-haiku-latest', mock: 'mock' }[provider] || '';
 }
 export async function testProviders(cfg) {
   const primary = providerName();
