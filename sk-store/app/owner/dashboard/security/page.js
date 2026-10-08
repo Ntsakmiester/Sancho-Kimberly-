@@ -1,8 +1,10 @@
+import { requirePageRole } from '../../../../lib/pageguard';
 import pool from '../../../../lib/db';
 import { Table, Td, Flash } from '../../../../components/ui';
 import Confirm from '../../../../components/Confirm';
 export const dynamic = 'force-dynamic';
 export default async function Security({ searchParams: sp }) {
+  await requirePageRole('owner', '/owner/login');
   const users = (await pool.query("select u.id,u.email,u.role,(select count(*)::int from sessions s where s.user_id=u.id and s.expires_at>now()) sessions from users u where u.role in ('admin','staff','owner') order by u.id")).rows;
   const ev = (await pool.query("select created_at,action,record,result,ip from audit_log where result<>'ok' or action ilike '%LOGIN%' or action ilike '%LOCK%' order by id desc limit 30")).rows;
   return (<>

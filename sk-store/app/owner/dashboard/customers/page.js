@@ -1,7 +1,9 @@
+import { requirePageRole } from '../../../../lib/pageguard';
 import pool from '../../../../lib/db';
 import { price } from '../../../../lib/format';
 export const dynamic = 'force-dynamic';
 export default async function Customers() {
+  await requirePageRole('owner', '/owner/login');
   const r = await pool.query("select email, max(name) name, count(*)::int orders, sum(total_cents)::int spent, max(created_at) last_order from orders group by email order by spent desc limit 200");
   const acc = await pool.query("select email,name,created_at from users where role='customer' order by id desc limit 200");
   return (<>

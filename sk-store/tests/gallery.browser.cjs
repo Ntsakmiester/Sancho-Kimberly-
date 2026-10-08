@@ -1,35 +1,20 @@
-// Install playwright separately and run against a local test server on port 3100. No production writes.
-const { chromium } = require('playwright');
-const assert = require('node:assert/strict');
+// Install playwright separately. Run only against a local isolated test app on port 3100.
+const {chromium}=require('playwright');const assert=require('node:assert/strict');
 (async()=>{
- const browser=await chromium.launch({executablePath:'/usr/bin/google-chrome',headless:true,args:['--no-sandbox']});
- const desktop=await browser.newContext({viewport:{width:1365,height:1000},colorScheme:'light'});
- const page=await desktop.newPage();const errors=[];page.on('pageerror',e=>errors.push(e.message));
- await page.goto('http://localhost:3100/shop?cat=Beanies'); await page.waitForTimeout(600);
- console.log('shop URL',page.url());
- await page.screenshot({path:'/downloads/beanie-shop-desktop.png',fullPage:true});
- await page.goto('http://localhost:3100/product/beanie-black-stars');await page.waitForTimeout(400);
- await page.screenshot({path:'/downloads/beanie-product-desktop.png',fullPage:true});
- await page.getByRole('button',{name:'Next photo',exact:true}).click();await page.waitForTimeout(500);
- assert.equal(await page.locator('.gallery-count').textContent(),'2 / 2');
- await page.screenshot({path:'/downloads/beanie-product-contact-sheet.png',fullPage:true});
- await page.locator('.gallery-track').focus();await page.keyboard.press('Home');await page.waitForTimeout(500);assert.equal(await page.locator('.gallery-count').textContent(),'1 / 2');
- await page.getByRole('button',{name:'Add to cart',exact:true}).click();await page.getByRole('status').waitFor();
- let cart=await page.evaluate(()=>JSON.parse(localStorage.getItem('sk-cart')));assert.equal(cart[0].slug,'beanie-black-stars');assert.equal(cart[0].price_cents,24000);assert.equal(cart[0].size,'One size');assert.ok(cart[0].image.endsWith('beanie-black-stars.png'));
- const mobile=await browser.newContext({viewport:{width:390,height:844},isMobile:true,hasTouch:true,colorScheme:'light'});const m=await mobile.newPage();m.on('pageerror',e=>errors.push(e.message));
- await m.goto('http://localhost:3100/shop?cat=Beanies');await m.waitForTimeout(500);
- console.log('mobile product names',await m.locator('.card h3').allTextContents());
- assert.equal(await m.locator('.card h3').filter({hasText:'Doodle Beanie'}).count(),0);
- const card=m.locator('.card').filter({hasText:'Black stars'});await card.scrollIntoViewIfNeeded();
- await card.getByRole('button',{name:'Next photo',exact:true}).click();await m.waitForTimeout(500);assert.equal(await card.locator('.gallery-count').textContent(),'2 / 2');assert.ok(m.url().includes('/shop'));
- await m.screenshot({path:'/downloads/beanie-shop-mobile.png',fullPage:true});
- await card.getByRole('link',{name:'View Black stars',exact:true}).last().click();await m.waitForTimeout(500);
- await m.screenshot({path:'/downloads/beanie-product-mobile.png',fullPage:true});
- const box=await m.locator('.gallery-track').boundingBox();const cdp=await mobile.newCDPSession(m);const y=box.y+box.height*.5,x=box.x+box.width*.85;
- await cdp.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[{x,y}]});
- for(let j=1;j<=8;j++){await cdp.send('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:[{x:x-j*box.width*.085,y}]});await m.waitForTimeout(25);}
- await cdp.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});await m.waitForTimeout(600);assert.equal(await m.locator('.gallery-count').textContent(),'2 / 2');
- assert.equal(await m.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
- await m.emulateMedia({reducedMotion:'reduce'});await m.getByRole('button',{name:'Previous photo',exact:true}).click();await m.waitForTimeout(100);assert.equal(await m.locator('.gallery-count').textContent(),'1 / 2');
- assert.equal(errors.length,0,errors.join('\n'));console.log('PASS desktop arrows, keyboard, cart price/size/photo, card gallery without navigation, real touch swipe, reduced motion, no overflow or browser errors');await browser.close();
+ const browser=await chromium.launch({executablePath:'/usr/bin/google-chrome',args:['--no-sandbox']});const errors=[];
+ const desktop=await browser.newContext({viewport:{width:1365,height:1000}});const p=await desktop.newPage();p.on('pageerror',e=>errors.push(e.message));
+ const noArrows=async page=>assert.equal(await page.locator('button[aria-label="Previous photo"],button[aria-label="Next photo"]').count(),0);
+ await p.goto('http://localhost:3100/shop');await noArrows(p);await p.screenshot({path:'/downloads/no-arrows-shop-desktop.png',fullPage:true});
+ await p.goto('http://localhost:3100/product/street-club-tee-black');await noArrows(p);assert.match(await p.locator('body').innerText(),/R\s*450/);
+ await p.screenshot({path:'/downloads/black-tee-desktop.png',fullPage:true});
+ await p.locator('.gallery-track').focus();await p.keyboard.press('ArrowRight');await p.waitForTimeout(200);assert.equal(await p.locator('.gallery-count').textContent(),'2 / 3');await p.keyboard.press('End');await p.waitForTimeout(200);assert.equal(await p.locator('.gallery-count').textContent(),'3 / 3');await p.keyboard.press('Home');await p.waitForTimeout(200);
+ await p.getByRole('button',{name:'View photo 2',exact:true}).click();await p.waitForTimeout(600);assert.equal(await p.locator('.gallery-count').textContent(),'2 / 3');
+ await p.getByRole('button',{name:'S',exact:true}).click();await p.getByRole('button',{name:'Add to cart',exact:true}).click();await p.getByRole('status').waitFor();let cart=await p.evaluate(()=>JSON.parse(localStorage.getItem('sk-cart')));assert.equal(cart[0].slug,'street-club-tee-black');assert.equal(cart[0].price_cents,45000);assert.equal(cart[0].size,'S');assert.match(cart[0].image,/street-club-black-front/);
+ const mobile=await browser.newContext({viewport:{width:390,height:844},isMobile:true,hasTouch:true});const m=await mobile.newPage();m.on('pageerror',e=>errors.push(e.message));const cdp=await mobile.newCDPSession(m);
+ async function swipe(locator){await locator.scrollIntoViewIfNeeded();let b=await locator.boundingBox(),x=b.x+b.width*.85,y=b.y+b.height*.5;await cdp.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[{x,y}]});for(let j=1;j<=8;j++){await cdp.send('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:[{x:x-j*b.width*.085,y}]});await m.waitForTimeout(25)}await cdp.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});await m.waitForTimeout(600)}
+ await m.goto('http://localhost:3100/shop?cat=Beanies');await noArrows(m);const card=m.locator('.card').filter({hasText:'Black stars'});await swipe(card.locator('.gallery-track'));assert.equal(await card.locator('.gallery-count').textContent(),'2 / 2');assert.match(m.url(),/\/shop/);await m.screenshot({path:'/downloads/no-arrows-shop-mobile.png',fullPage:true});
+ await card.getByRole('link',{name:'View Black stars',exact:true}).last().click();await m.waitForTimeout(300);assert.match(m.url(),/\/product\/beanie-black-stars/);
+ await m.goto('http://localhost:3100/product/street-club-tee-black');await noArrows(m);await m.screenshot({path:'/downloads/black-tee-mobile.png',fullPage:true});await swipe(m.locator('.gallery-track'));assert.equal(await m.locator('.gallery-count').textContent(),'2 / 3');await m.screenshot({path:'/downloads/black-tee-mobile-back.png',fullPage:true});assert.equal(await m.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
+ await m.emulateMedia({reducedMotion:'reduce'});await m.getByRole('button',{name:'View photo 1',exact:true}).click();await m.waitForTimeout(100);assert.equal(await m.locator('.gallery-count').textContent(),'1 / 3');await m.locator('.gallery-track').focus();await m.keyboard.press('End');await m.waitForTimeout(100);assert.equal(await m.locator('.gallery-count').textContent(),'3 / 3');
+ await p.goto('http://localhost:3100');await noArrows(p);await p.screenshot({path:'/downloads/no-arrows-home-desktop.png',fullPage:true});assert.equal(errors.length,0,errors.join('\n'));await browser.close();console.log('PASS no gallery arrow buttons, desktop keyboard/thumbnails, real touch swipes on cards/pages, card links, R450/S/cart front photo, reduced motion, overflow and browser errors');
 })().catch(e=>{console.error(e);process.exit(1)});

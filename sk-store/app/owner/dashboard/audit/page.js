@@ -1,6 +1,8 @@
+import { requirePageRole } from '../../../../lib/pageguard';
 import pool from '../../../../lib/db';
 export const dynamic = 'force-dynamic';
 export default async function Audit() {
+  await requirePageRole('owner', '/owner/login');
   const r = await pool.query('select a.*,u.email from audit_log a left join users u on u.id=a.account_id order by a.id desc limit 200');
   return (<>
     <h3>Audit log</h3>

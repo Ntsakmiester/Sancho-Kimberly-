@@ -29,3 +29,12 @@ Checked on 6 October 2026 with a running Next.js app and an isolated local Postg
 - Reset emails limited per account and per IP; reset tokens are claimed atomically; disabled accounts cannot reset.
 - Login lockout is per email+IP (a stranger cannot lock the owner out); minimum password length is 10.
 - tests/e2e.sh is now re-runnable and covers the new checks: 62 passed, 0 failed (run twice).
+
+## October 8 update: customer account, black tee and swipe-only gallery
+
+- Circular previous/next gallery buttons removed from the shared gallery; native touch/trackpad swiping, keyboard arrows/Home/End, thumbnails and photo counts remain. Regular back and pagination links are unchanged.
+- Street Club Tee - Black: R450, Tees, S/M/L/XL, initial quantity 25 per size. Three supplied PNGs in front/back/combined order. Existing white tee stays unchanged. Setup adds the new product once to existing catalogues without overwriting later inventory edits.
+- Customer account now uses grouped Orders/Profile/Addresses/Security panels, with Messages & notifications at the top. Inbox and message pages have clearer titles, read/unread state, previews, dates and spacing. Existing account APIs and ownership checks are unchanged.
+- Visible form labels, keyboard focus, native disclosure controls, scoped mobile layout, dark mode and reduced-motion handling. Motion is limited to 150ms colour/border feedback; no entrance animation or animated form layout.
+- Production build passed. 182 foundation tests, 24 messaging/filter checks, inventory/image checks, new and existing catalogue checks passed in isolated databases. Chromium desktop and 390px touch-emulated browser checks passed, including real touch event swipes, cart data, profile saving, address adding, read-on-open and unread filters. No production database writes.
+- Inspected final desktop/phone profile, dark phone profile, inbox, message, full product page and shop screenshots. Fixed a phone inbox badge collision and scoped wordmark spacing on customer account pages. Not tested on physical phones and not deployed.

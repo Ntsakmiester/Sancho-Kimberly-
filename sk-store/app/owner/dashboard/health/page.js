@@ -1,7 +1,9 @@
+import { requirePageRole } from '../../../../lib/pageguard';
 import { healthReport } from '../../../../lib/health';
 import { Table, Td } from '../../../../components/ui';
 export const dynamic = 'force-dynamic';
 export default async function Health() {
+  await requirePageRole('owner', '/owner/login');
   const h = await healthReport();
   const rows = [['Database', `${h.database.status}${h.database.latency_ms != null ? ' (' + h.database.latency_ms + ' ms)' : ''}`], ['Payments', `${h.payments.provider}: ${h.payments.status}`], ['Email', `${h.email.provider}: ${h.email.status}`], ['Service state', h.service ? `${h.service.status} / ${h.service.payment_status}` : '-'],
     ['Gateway notifications (7 days)', h.webhook_failures_7d], ['Failed emails (7 days)', h.failed_emails_7d], ['Unpaid orders older than a day', h.stale_unpaid_orders], ['Orders needing stock attention', h.orders_needing_attention]];

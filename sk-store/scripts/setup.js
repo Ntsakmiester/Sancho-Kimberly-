@@ -78,6 +78,7 @@ function hashPassword(pw) {
     console.log('Seeded', seed.length, 'products');
   }
   if (await require('./beanie-catalogue').applyBeanieCatalogue(pool)) console.log('Added named beanie catalogue');
+  if (await require('./black-tee-catalogue').applyBlackTeeCatalogue(pool)) console.log('Added black Street Club tee');
   // Idempotent: file every product under a category (also covers starter products seeded after the migration ran).
   await pool.query("insert into categories(slug,name,position) select lower(regexp_replace(category,'[^a-zA-Z0-9]+','-','g')), category, row_number() over (order by category) from (select distinct category from products) c where not exists (select 1 from categories k where k.name=c.category) on conflict do nothing");
   await pool.query('update products p set category_id=c.id from categories c where c.name=p.category and p.category_id is null');

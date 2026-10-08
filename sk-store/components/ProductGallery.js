@@ -35,11 +35,9 @@ export default function ProductGallery({ images, name, overrideImage, onNavigate
     </div>
     {many && <>
       <div className="gallery-controls">
-        <button type="button" onClick={() => go(index - 1)} disabled={index === 0} aria-label="Previous photo">&larr;</button>
         <span className="gallery-count" aria-live="polite" aria-atomic="true">{index + 1} / {images.length}</span>
-        <button type="button" onClick={() => go(index + 1)} disabled={index === images.length - 1} aria-label="Next photo">&rarr;</button>
       </div>
-      {!compact && <p className="gallery-hint">Swipe through photos or use the arrows.</p>}
+      {!compact && <p className="gallery-hint">Swipe through photos.</p>}
       {!compact && <div className="thumbs gallery-thumbs" aria-label="Choose a product photo">
         {images.map((im, j) => <button type="button" key={j} className={j === index ? 'sel' : ''} onClick={() => go(j)} aria-pressed={j === index} aria-label={`View photo ${j + 1}`}><img src={im.url} alt="" /></button>)}
       </div>}

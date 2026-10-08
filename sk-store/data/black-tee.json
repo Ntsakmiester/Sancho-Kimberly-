@@ -1,0 +1,31 @@
+{
+  "slug": "street-club-tee-black",
+  "name": "Street Club Tee - Black",
+  "category": "Tees",
+  "price_cents": 45000,
+  "description": "Black tee with a small chest logo on the front and a large Heaven Sent print on the back.",
+  "sizes": [
+    "S",
+    "M",
+    "L",
+    "XL"
+  ],
+  "stock": 25,
+  "images": [
+    {
+      "url": "/products/street-club-black-front.png",
+      "bg": "#ffffff",
+      "alt": "Street Club Tee - Black, front"
+    },
+    {
+      "url": "/products/street-club-black-back.png",
+      "bg": "#ffffff",
+      "alt": "Street Club Tee - Black, back"
+    },
+    {
+      "url": "/products/street-club-black-combined.png",
+      "bg": "#ffffff",
+      "alt": "Street Club Tee - Black, front and back"
+    }
+  ]
+}

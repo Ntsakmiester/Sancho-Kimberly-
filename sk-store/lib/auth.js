@@ -34,7 +34,8 @@ export const destroyUserSessions = (userId) => pool.query('delete from sessions 
 function readToken(req) {
   const c = req.headers.get('cookie') || '';
   const m = c.match(new RegExp('(?:^|;\\s*)' + COOKIE + '=([^;]+)'));
-  return m ? decodeURIComponent(m[1]) : null;
+  if (!m) return null;
+  try { return decodeURIComponent(m[1]); } catch { return null; }
 }
 export async function getUser(req) {
   const t = readToken(req);

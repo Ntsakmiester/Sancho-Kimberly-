@@ -1,7 +1,9 @@
+import { requirePageRole } from '../../../../lib/pageguard';
 import pool from '../../../../lib/db';
 import { price } from '../../../../lib/format';
 export const dynamic = 'force-dynamic';
 export default async function Orders() {
+  await requirePageRole('owner', '/owner/login');
   const r = await pool.query('select ref,status,name,email,total_cents,created_at from orders order by id desc limit 100');
   return (<>
     <h3>Orders &amp; payment activity</h3>

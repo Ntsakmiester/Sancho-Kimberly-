@@ -1,3 +1,4 @@
+import { requirePageRole } from '../../../lib/pageguard';
 import Link from 'next/link';
 import pool from '../../../lib/db';
 import { money } from '../../../lib/format';
@@ -5,6 +6,7 @@ import { getServiceState } from '../../../lib/service';
 import { Stats, Stat } from '../../../components/ui';
 export const dynamic = 'force-dynamic';
 export default async function Overview() {
+  await requirePageRole('owner', '/owner/login');
   const [rev, orders, customers, products, admins, staff, state] = await Promise.all([
     pool.query("select coalesce(sum(amount_cents),0)::bigint t from payments where status in ('PAID','REFUNDED','PARTIALLY_REFUNDED')"),
     pool.query('select count(*)::int c from orders'), pool.query("select count(*)::int c from users where role='customer'"),

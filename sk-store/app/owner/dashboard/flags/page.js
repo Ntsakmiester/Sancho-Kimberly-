@@ -1,7 +1,9 @@
+import { requirePageRole } from '../../../../lib/pageguard';
 import pool from '../../../../lib/db';
 import { Table, Td, Flash } from '../../../../components/ui';
 export const dynamic = 'force-dynamic';
 export default async function Flags({ searchParams: sp }) {
+  await requirePageRole('owner', '/owner/login');
   const rows = (await pool.query('select key,enabled,description from feature_flags order by key')).rows;
   return (<>
     <Flash sp={sp} /><h3>Feature flags</h3><p className="low">Turn parts of the store on or off without a deploy. Changes are audited.</p>

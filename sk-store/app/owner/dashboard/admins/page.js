@@ -1,8 +1,10 @@
+import { requirePageRole } from '../../../../lib/pageguard';
 import pool from '../../../../lib/db';
 import { PERMS } from '../../../../lib/perms';
 export const dynamic = 'force-dynamic';
 const btn = { padding: '4px 10px' };
 export default async function Admins({ searchParams }) {
+  await requirePageRole('owner', '/owner/login');
   const gr = (await pool.query('select user_id,permission from user_permissions')).rows;
   const r = await pool.query("select id,email,name,role,active,created_at from users where role in ('admin','staff') order by id");
   return (<>

@@ -13,10 +13,10 @@ export default async function Message({ params }) {
   const n = r.rows[0];
   if (!n) notFound();
   return (
-    <section className="wrap shop">
+    <section className="wrap shop customer-inbox">
       <Link className="back" href="/account/messages">&larr; All messages</Link>
       <article className="msgview">
-        <h3>{n.subject}</h3>
+        <p className="eyebrow">{n.type === 'message' ? 'STORE MESSAGE' : 'ORDER UPDATE'}</p><h1 className="h2">{n.subject}</h1>
         <p className="low" style={{ margin: 0 }}>{n.type === 'message' ? 'From Sancho Kimberly' : 'Order update'} &middot; {new Date(n.created_at).toLocaleString('en-ZA')}</p>
         <div className="body">{n.body || 'No further details.'}</div>
       </article>

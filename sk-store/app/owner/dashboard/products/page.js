@@ -1,8 +1,10 @@
+import { requirePageRole } from '../../../../lib/pageguard';
 import Link from 'next/link';
 import pool from '../../../../lib/db';
 import { price } from '../../../../lib/format';
 export const dynamic = 'force-dynamic';
 export default async function Products() {
+  await requirePageRole('owner', '/owner/login');
   const r = await pool.query(`select p.id,p.name,p.category,p.price_cents,p.active,
     coalesce((select json_agg(json_build_object('size',v.size,'colour',v.colour,'qty',v.qty) order by v.id) from variants v where v.product_id=p.id),'[]') variants
     from products p order by p.id`);

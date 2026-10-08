@@ -1,7 +1,9 @@
+import { requirePageRole } from '../../../../lib/pageguard';
 import pool from '../../../../lib/db';
 import { getServiceState, SERVICE_STATES, PAYMENT_STATES } from '../../../../lib/service';
 export const dynamic = 'force-dynamic';
 export default async function Service({ searchParams }) {
+  await requirePageRole('owner', '/owner/login');
   const s = await getServiceState();
   const hist = await pool.query('select h.*,u.email from service_history h left join users u on u.id=h.changed_by order by h.id desc limit 50');
   return (<>
